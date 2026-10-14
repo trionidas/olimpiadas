@@ -110,6 +110,8 @@
         input[type="text"] {
             user-select: text;
             -webkit-user-select: text;
+            touch-action: manipulation;
+            font-size: 16px; /* Evita el auto-zoom de Safari en iOS al tocar el input */
         }
 
         canvas {
@@ -214,66 +216,68 @@
             <canvas id="gameCanvas"></canvas>
             <div class="crt-overlay absolute inset-0"></div>
 
-            <!-- Modal Principal de Evento y Resultados -->
-            <div id="overlayModal" class="absolute inset-0 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2 sm:p-3 z-20">
-                <div class="bg-slate-900 border-2 border-amber-500 rounded-2xl p-3 sm:p-5 max-w-md w-full max-h-full overflow-y-auto custom-scroll text-center shadow-2xl flex flex-col justify-between">
+            <!-- Modal Principal de Evento y Resultados (Ultra compacto para caber sin scroll en móvil) -->
+            <div id="overlayModal" class="absolute inset-0 bg-slate-950/88 backdrop-blur-sm flex items-center justify-center p-1.5 sm:p-3 z-20">
+                <div class="bg-slate-900 border-2 border-amber-500 rounded-2xl p-2.5 sm:p-4 max-w-md w-full max-h-full overflow-y-auto custom-scroll text-center shadow-2xl flex flex-col justify-between gap-1.5">
                     <div>
-                        <div class="flex items-center justify-center gap-1.5 flex-wrap mb-1">
-                            <span id="modalBadge" class="inline-block px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-bold uppercase">
+                        <div class="flex items-center justify-center gap-1.5 flex-wrap mb-0.5">
+                            <span id="modalBadge" class="inline-block px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[9px] sm:text-[10px] font-bold uppercase">
                                 100 Metros Lisos
                             </span>
-                            <span id="modalTourStepBadge" class="hidden px-2.5 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-indigo-200 text-[10px] font-extrabold uppercase">
+                            <span id="modalTourStepBadge" class="hidden px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-indigo-200 text-[9px] sm:text-[10px] font-extrabold uppercase">
                                 Prueba 1 de 3
                             </span>
                         </div>
-                        <h2 id="modalTitle" class="retro-font text-xs sm:text-base text-white mb-1 break-words">¡PREPARADO EN PISTA!</h2>
-                        <p id="modalDesc" class="text-[11px] sm:text-xs text-slate-300 mb-2.5 leading-snug">
+                        <h2 id="modalTitle" class="retro-font text-[11px] sm:text-sm text-white mb-0.5 break-words">¡PREPARADO EN PISTA!</h2>
+                        <p id="modalDesc" class="text-[10px] sm:text-xs text-slate-300 mb-1.5 leading-tight">
                             Toca rápidamente el botón <strong class="text-red-400">CORRER</strong> para alcanzar la máxima velocidad.
                         </p>
 
-                        <div id="arcadeNameBox" class="mb-2.5 bg-slate-950 p-2 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
-                            <span class="text-[10px] text-amber-400 uppercase font-bold text-left leading-tight">Tu Nombre / Nick:</span>
-                            <input type="text" id="playerNickInput" maxlength="8" value="" placeholder="TU NOMBRE" onchange="syncNickInputs(this.value)" class="bg-slate-900 border border-amber-500/60 rounded-lg px-2.5 py-1 text-center retro-font text-xs text-white placeholder-slate-600 w-36 uppercase tracking-wider outline-none focus:border-amber-400">
+                        <div id="arcadeNameBox" class="mb-1.5 bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
+                            <span class="text-[10px] text-amber-400 uppercase font-bold text-left leading-tight shrink-0">Tu Nombre:</span>
+                            <input type="text" id="playerNickInput" maxlength="8" value="" placeholder="TU NOMBRE" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="this.value = this.value.toUpperCase()" onchange="syncNickInputs(this.value)" class="bg-slate-900 border border-amber-500/60 rounded-lg px-2 py-1 text-center font-black text-white placeholder-slate-500 w-36 uppercase tracking-wider outline-none focus:border-amber-400">
                         </div>
 
-                        <div id="highJumpSelector" class="hidden mb-2.5 bg-slate-950 p-2 rounded-xl border border-slate-800">
-                            <span class="text-[10px] text-amber-400 uppercase font-bold block mb-1">Altura del Listón:</span>
+                        <div id="highJumpSelector" class="hidden mb-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                            <span class="text-[9px] text-amber-400 uppercase font-bold block mb-1">Altura del Listón:</span>
                             <div class="flex flex-wrap justify-center gap-1" id="barHeightButtons"></div>
                         </div>
 
-                        <div id="resultsBox" class="hidden bg-slate-950/90 rounded-xl p-2 mb-2.5 border border-slate-800 text-left space-y-1">
-                            <div id="resultsList" class="space-y-1 text-[11px] sm:text-xs"></div>
+                        <div id="resultsBox" class="hidden bg-slate-950/90 rounded-xl p-1.5 mb-1.5 border border-slate-800 text-left space-y-1 max-h-28 overflow-y-auto custom-scroll">
+                            <div id="resultsList" class="space-y-1 text-[10px] sm:text-xs"></div>
                         </div>
 
-                        <div id="onlineReadyOverlayBox" class="hidden bg-indigo-950/80 border border-indigo-500/60 rounded-xl p-2.5 mb-2.5 text-left space-y-1.5">
-                            <div class="flex items-center justify-between">
-                                <span class="text-[10px] font-black uppercase tracking-wider text-indigo-300">SALA ONLINE • PREPARADOS</span>
-                                <span id="overlayReadyCounter" class="px-2 py-0.5 rounded-full bg-slate-900 text-amber-400 font-extrabold text-[10px] border border-amber-500/40">0/0 LISTOS</span>
+                        <div id="onlineReadyOverlayBox" class="hidden bg-indigo-950/85 border border-indigo-500/60 rounded-xl p-2 mb-1.5 text-left space-y-1.5">
+                            <div class="flex items-center justify-between gap-1">
+                                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-indigo-300 truncate">SALA ONLINE • PREPARADOS</span>
+                                <span id="overlayReadyCounter" class="px-2 py-0.5 rounded-full bg-slate-900 text-amber-400 font-extrabold text-[9px] border border-amber-500/40 shrink-0">0/0 LISTOS</span>
                             </div>
-                            <div id="overlayReadyRoster" class="flex flex-wrap gap-1 text-[10px]"></div>
-                            <button id="btnToggleReadyOverlay" onclick="toggleMyReadyState()" class="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow active:scale-95 transition-all flex items-center justify-center gap-1.5">
-                                <span id="btnToggleReadyOverlayIcon">✋</span>
-                                <span id="btnToggleReadyOverlayText">PULSA PARA ESTAR LISTO</span>
+                            <div id="overlayReadyRoster" class="flex flex-wrap gap-1 text-[9px] max-h-14 overflow-y-auto custom-scroll"></div>
+                            <button id="btnToggleReadyOverlay" onclick="toggleMyReadyState()" class="w-full py-2 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                                <span id="btnToggleReadyOverlayIcon" class="shrink-0">✋</span>
+                                <span id="btnToggleReadyOverlayText" class="truncate">CONFIRMAR QUE ESTOY LISTO</span>
                             </button>
                         </div>
                     </div>
 
-                    <div class="flex flex-col gap-1.5 mt-1 shrink-0">
-                        <button id="btnStartRace" onclick="startEventAction()" class="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+                    <div class="flex flex-col gap-1 shrink-0">
+                        <button id="btnStartRace" onclick="startEventAction()" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1.5">
                             <span>🏁</span> <span id="btnStartText" class="truncate">EMPEZAR PRUEBA</span>
                         </button>
-                        <button id="btnOpenOnlineMain" onclick="openOnlineModal()" class="w-full py-2 px-3 rounded-xl bg-indigo-950/90 hover:bg-indigo-900 text-indigo-200 border border-indigo-500/50 font-extrabold text-[11px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition-transform flex items-center justify-center gap-1.5">
-                            <span>🌐</span> <span id="btnOpenOnlineMainText" class="truncate">CREAR / UNIRSE A SALA ONLINE</span>
+                        <button id="btnOnlineSyncStart" onclick="hostTriggerOnlineStart()" class="hidden w-full py-2 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-45 disabled:pointer-events-none">
+                            <span class="shrink-0">🚀</span> <span id="btnOnlineSyncStartText" class="truncate">LANZAR PRUEBA</span>
                         </button>
-                        <button id="btnNextTournamentEvent" onclick="hostAdvanceTournament()" class="hidden w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1.5">
-                            <span>⏭️</span> <span id="btnNextTourText" class="truncate">SIGUIENTE PRUEBA DEL TORNEO</span>
+                        <button id="btnNextTournamentEvent" onclick="hostAdvanceTournament()" class="hidden w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+                            <span class="shrink-0">⏭️</span> <span id="btnNextTourText" class="truncate">SIGUIENTE PRUEBA</span>
                         </button>
-                        <button id="btnOnlineSyncStart" onclick="hostTriggerOnlineStart()" class="hidden w-full py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-45 disabled:pointer-events-none">
-                            <span>🚀</span> <span id="btnOnlineSyncStartText" class="truncate">LANZAR PRUEBA (ESPERANDO LISTOS)</span>
-                        </button>
-                        <button id="btnWhatsAppShare" onclick="shareChallengeOnWhatsApp()" class="hidden w-full py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider shadow active:scale-95 transition-transform flex items-center justify-center gap-1.5">
-                            <span>📲</span> <span class="truncate">RETAR POR WHATSAPP</span>
-                        </button>
+                        <div class="grid grid-cols-2 gap-1">
+                            <button id="btnOpenOnlineMain" onclick="openOnlineModal()" class="col-span-2 py-1.5 px-2.5 rounded-xl bg-indigo-950/90 hover:bg-indigo-900 text-indigo-200 border border-indigo-500/50 font-extrabold text-[10px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition-transform flex items-center justify-center gap-1">
+                                <span class="shrink-0">🌐</span> <span id="btnOpenOnlineMainText" class="truncate">SALA ONLINE</span>
+                            </button>
+                            <button id="btnWhatsAppShare" onclick="shareChallengeOnWhatsApp()" class="hidden col-span-2 py-1.5 px-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition-transform flex items-center justify-center gap-1">
+                                <span class="shrink-0">📲</span> <span class="truncate">RETAR POR WHATSAPP</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -331,73 +335,73 @@
                 <div class="flex items-center gap-2 min-w-0">
                     <span class="text-lg sm:text-xl shrink-0">🌐</span>
                     <span class="retro-font text-[11px] sm:text-sm text-indigo-400 truncate">SALA Y TORNEO ONLINE</span>
+    <!-- Modal Sala Online + Selector de Campeonato (Compactado sin scroll en móvil) -->
+    <div id="onlineModal" class="hidden fixed inset-0 bg-slate-950/92 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-slate-900 border-2 border-indigo-500 rounded-2xl w-full max-w-md max-h-[96dvh] overflow-y-auto custom-scroll p-3 sm:p-4 flex flex-col gap-2 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="text-base sm:text-lg shrink-0">🌐</span>
+                    <span class="retro-font text-[10px] sm:text-xs text-indigo-400 truncate">SALA Y TORNEO ONLINE</span>
                 </div>
-                <button onclick="closeOnlineModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs shrink-0">✕</button>
+                <button onclick="closeOnlineModal()" class="px-2.5 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs shrink-0">✕</button>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+            <div class="grid grid-cols-2 gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
                 <div>
-                    <label class="text-[10px] text-amber-400 uppercase font-bold block mb-1 truncate">1. Tu Nombre</label>
-                    <input id="onlineNickInput" type="text" maxlength="8" value="" onchange="syncNickInputs(this.value)" placeholder="TU NOMBRE" class="w-full bg-slate-900 border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-xs font-black text-white placeholder-slate-600 uppercase outline-none focus:border-amber-400">
+                    <label class="text-[9px] text-amber-400 uppercase font-bold block mb-0.5 truncate">1. Tu Nombre</label>
+                    <input id="onlineNickInput" type="text" maxlength="8" value="" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="this.value = this.value.toUpperCase()" onchange="syncNickInputs(this.value)" placeholder="TU NOMBRE" class="w-full bg-slate-900 border border-amber-500/50 rounded-lg px-2 py-1 text-center font-black text-white placeholder-slate-500 uppercase outline-none focus:border-amber-400">
                 </div>
                 <div>
-                    <label class="text-[10px] text-indigo-400 uppercase font-bold block mb-1 truncate">2. Código Sala</label>
-                    <input id="onlineRoomInput" type="text" maxlength="10" value="PISTA1" placeholder="SALA" class="w-full bg-slate-900 border border-indigo-500/60 rounded-lg px-2.5 py-1.5 text-xs font-black text-indigo-300 uppercase outline-none focus:border-indigo-400">
+                    <label class="text-[9px] text-indigo-400 uppercase font-bold block mb-0.5 truncate">2. Código Sala</label>
+                    <input id="onlineRoomInput" type="text" maxlength="10" value="" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')" placeholder="EJ: PISTA1" class="w-full bg-slate-900 border border-indigo-500/60 rounded-lg px-2 py-1 text-center font-black text-indigo-300 placeholder-slate-500 uppercase outline-none focus:border-indigo-400">
                 </div>
             </div>
 
             <!-- Configuración del Torneo (1, 3 o 5 Pruebas) -->
-            <div id="hostTournamentConfigBox" class="bg-slate-950 p-2.5 rounded-xl border border-slate-800 space-y-2">
-                <div class="flex items-center justify-between">
-                    <span class="text-[10px] text-emerald-400 uppercase font-extrabold">3. Formato del Campeonato (Anfitrión)</span>
-                    <span class="text-[10px] text-slate-400 font-bold">Puntos: 1º=10, 2º=6, 3º=4</span>
+            <div id="hostTournamentConfigBox" class="bg-slate-950 p-2 rounded-xl border border-slate-800 space-y-1.5">
+                <div class="flex items-center justify-between gap-1">
+                    <span class="text-[9px] sm:text-[10px] text-emerald-400 uppercase font-extrabold truncate">3. Formato (Anfitrión)</span>
+                    <span class="text-[9px] text-slate-400 font-bold shrink-0">1º=10, 2º=6, 3º=4</span>
                 </div>
                 <div class="grid grid-cols-3 gap-1.5">
-                    <button id="tourLenBtn-1" onclick="selectTournamentLength(1)" class="py-2 px-1.5 rounded-lg font-extrabold text-[11px] border transition-all bg-slate-900 text-slate-300 border-slate-700">
-                        🥇 1 Prueba<br><span class="text-[9px] font-normal text-slate-400">Prueba actual</span>
+                    <button id="tourLenBtn-1" onclick="selectTournamentLength(1)" class="py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-slate-900 text-slate-300 border-slate-700 leading-tight">
+                        🥇 1 Prueba<br><span class="text-[8px] font-normal text-slate-400">Actual</span>
                     </button>
-                    <button id="tourLenBtn-3" onclick="selectTournamentLength(3)" class="py-2 px-1.5 rounded-lg font-extrabold text-[11px] border transition-all bg-amber-500 text-slate-950 border-amber-300 shadow">
-                        🔥 3 Pruebas<br><span class="text-[9px] font-bold text-slate-900">Triatlón</span>
+                    <button id="tourLenBtn-3" onclick="selectTournamentLength(3)" class="py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-amber-500 text-slate-950 border-amber-300 shadow leading-tight">
+                        🔥 3 Pruebas<br><span class="text-[8px] font-bold text-slate-900">Triatlón</span>
                     </button>
-                    <button id="tourLenBtn-5" onclick="selectTournamentLength(5)" class="py-2 px-1.5 rounded-lg font-extrabold text-[11px] border transition-all bg-slate-900 text-slate-300 border-slate-700">
-                        👑 5 Pruebas<br><span class="text-[9px] font-normal text-slate-400">Pentatlón</span>
+                    <button id="tourLenBtn-5" onclick="selectTournamentLength(5)" class="py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-slate-900 text-slate-300 border-slate-700 leading-tight">
+                        👑 5 Pruebas<br><span class="text-[8px] font-normal text-slate-400">Pentatlón</span>
                     </button>
                 </div>
-                <p id="tourEventsPreview" class="text-[10px] text-slate-400 text-center font-medium leading-tight">
+                <p id="tourEventsPreview" class="text-[9px] text-slate-400 text-center font-medium leading-tight truncate">
                     Pruebas: ⚡ 100m • 👟 Longitud • 🏹 Jabalina
                 </p>
             </div>
 
-            <div id="onlineStatusBox" class="bg-slate-950 rounded-xl p-2.5 border border-slate-800 text-xs space-y-2">
+            <div id="onlineStatusBox" class="bg-slate-950 rounded-xl p-2 border border-slate-800 text-xs space-y-1.5">
                 <div class="flex items-center justify-between gap-2">
-                    <span class="text-slate-400 font-bold shrink-0">Estado Sala:</span>
-                    <span id="onlineStatusLabel" class="font-extrabold text-slate-400 truncate">Desconectado</span>
+                    <span id="onlineStatusLabel" class="font-extrabold text-[11px] text-slate-400 truncate">Desconectado</span>
+                    <span id="modalReadyCounterBadge" class="text-[10px] font-black text-amber-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 shrink-0">OFFLINE</span>
                 </div>
-                <div class="flex items-center justify-between bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800">
-                    <span class="text-[10px] text-slate-300 font-bold uppercase">Jugadores Listos:</span>
-                    <span id="modalReadyCounterBadge" class="text-[11px] font-black text-amber-400">0/0 LISTOS</span>
+                <div id="onlinePlayersList" class="flex flex-col gap-1 text-[10px] text-slate-300 max-h-24 overflow-y-auto custom-scroll">
+                    <span class="text-slate-500 italic">Conéctate a una sala o inicia un torneo</span>
                 </div>
-                <div>
-                    <span class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Atletas, Estado y Puntuación:</span>
-                    <div id="onlinePlayersList" class="flex flex-col gap-1 text-[11px] text-slate-300 max-h-32 overflow-y-auto custom-scroll">
-                        <span class="text-slate-500 italic">Conéctate a una sala o inicia un torneo</span>
-                    </div>
-                </div>
-                <button id="btnModalReadyToggle" onclick="toggleMyReadyState()" class="hidden w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow active:scale-95 transition-all flex items-center justify-center gap-1.5">
-                    <span id="btnModalReadyIcon">✋</span>
-                    <span id="btnModalReadyText">ESTOY LISTO / PREPARADO</span>
+                <button id="btnModalReadyToggle" onclick="toggleMyReadyState()" class="hidden w-full py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                    <span id="btnModalReadyIcon" class="shrink-0">✋</span>
+                    <span id="btnModalReadyText" class="truncate">ESTOY LISTO / PREPARADO</span>
                 </button>
             </div>
 
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1">
-                <button id="btnDisconnectOnline" onclick="disconnectOnlineRoom()" class="hidden py-2 px-3 rounded-xl bg-red-950/70 hover:bg-red-900 text-red-300 border border-red-800/60 font-bold text-xs">
-                    Salir de Sala
-                </button>
-                <button id="btnConnectOnline" onclick="joinOnlineRoom()" class="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform">
+            <div class="grid grid-cols-2 gap-1.5 pt-0.5">
+                <button id="btnConnectOnline" onclick="joinOnlineRoom()" class="col-span-2 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform truncate">
                     🔗 Conectar a Sala Online
                 </button>
-                <button id="btnStartTournamentNow" onclick="hostStartNewTournament()" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all disabled:opacity-45 disabled:pointer-events-none">
+                <button id="btnStartTournamentNow" onclick="hostStartNewTournament()" class="col-span-2 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all disabled:opacity-45 disabled:pointer-events-none truncate">
                     🏆 Iniciar Torneo
+                </button>
+                <button id="btnDisconnectOnline" onclick="disconnectOnlineRoom()" class="hidden col-span-2 py-1.5 px-3 rounded-xl bg-red-950/70 hover:bg-red-900 text-red-300 border border-red-800/60 font-bold text-[10px] uppercase">
+                    Salir de la Sala
                 </button>
             </div>
         </div>
@@ -768,11 +772,6 @@
                     if (pInput) pInput.value = data.myNick;
                     if (oInput) oInput.value = data.myNick;
                 }
-                if (data.roomCode) {
-                    OnlineManager.roomCode = data.roomCode;
-                    const rInput = document.getElementById('onlineRoomInput');
-                    if (rInput) rInput.value = data.roomCode;
-                }
                 if (data.tournament && typeof data.tournament === 'object') {
                     Object.assign(TournamentState, data.tournament);
                     if (!Array.isArray(TournamentState.eventsQueue) || TournamentState.eventsQueue.length === 0) {
@@ -789,9 +788,9 @@
                 const btn = document.getElementById('tourLenBtn-' + n);
                 if (!btn) return;
                 if (n === numGames) {
-                    btn.className = 'py-2 px-1.5 rounded-lg font-extrabold text-[11px] border transition-all bg-amber-500 text-slate-950 border-amber-300 shadow scale-[1.02]';
+                    btn.className = 'py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-amber-500 text-slate-950 border-amber-300 shadow leading-tight';
                 } else {
-                    btn.className = 'py-2 px-1.5 rounded-lg font-extrabold text-[11px] border transition-all bg-slate-900 text-slate-300 border-slate-700';
+                    btn.className = 'py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-slate-900 text-slate-300 border-slate-700 leading-tight';
                 }
             });
 
@@ -1077,9 +1076,16 @@
         }
 
         function joinOnlineRoom() {
-            const rawRoom = (document.getElementById('onlineRoomInput').value || 'PISTA1').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const roomInputEl = document.getElementById('onlineRoomInput');
+            const rawRoom = (roomInputEl.value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
             const rawNick = (document.getElementById('onlineNickInput').value || document.getElementById('playerNickInput').value || '').trim().toUpperCase().slice(0, 8);
-            if (!rawRoom) return;
+            if (!rawRoom) {
+                setOnlineStatus('⚠️ Escribe un código de sala arriba', 'text-amber-400');
+                roomInputEl.focus();
+                SoundFX.foul();
+                return;
+            }
+            roomInputEl.value = rawRoom;
 
             syncNickInputs(rawNick);
 
@@ -1434,11 +1440,11 @@
                 if (modalReadyBtn) {
                     modalReadyBtn.classList.remove('hidden');
                     if (OnlineManager.isReady) {
-                        modalReadyBtn.className = 'w-full py-2 px-3 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow flex items-center justify-center gap-1.5';
+                        modalReadyBtn.className = 'w-full py-2 px-2.5 rounded-xl bg-emerald-500 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow flex items-center justify-center gap-1.5';
                         modalReadyIcon.textContent = '✅';
-                        modalReadyText.textContent = 'ESTÁS LISTO (PULSA PARA CANCELAR)';
+                        modalReadyText.textContent = 'ESTÁS LISTO (TOCA PARA CAMBIAR)';
                     } else {
-                        modalReadyBtn.className = 'w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow animate-pulse flex items-center justify-center gap-1.5';
+                        modalReadyBtn.className = 'w-full py-2 px-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow animate-pulse flex items-center justify-center gap-1.5';
                         modalReadyIcon.textContent = '✋';
                         modalReadyText.textContent = 'PULSA AQUÍ CUANDO ESTÉS LISTO';
                     }
@@ -1463,19 +1469,19 @@
                 if (overlayReadyBox) {
                     overlayReadyBox.classList.remove('hidden');
                     overlayReadyCounter.textContent = `${stats.readyCount}/${stats.totalCount} LISTOS`;
-                    overlayReadyCounter.className = `px-2 py-0.5 rounded-full bg-slate-900 font-extrabold text-[10px] border ${stats.allReady ? 'text-emerald-400 border-emerald-500/50' : 'text-amber-400 border-amber-500/40'}`;
+                    overlayReadyCounter.className = `px-2 py-0.5 rounded-full bg-slate-900 font-extrabold text-[9px] border shrink-0 ${stats.allReady ? 'text-emerald-400 border-emerald-500/50' : 'text-amber-400 border-amber-500/40'}`;
                     overlayReadyRoster.innerHTML = stats.players.map(pl => `
-                        <span class="px-2 py-0.5 rounded-md font-bold border ${pl.isReady ? 'bg-emerald-950/90 text-emerald-300 border-emerald-600/50' : 'bg-slate-900 text-slate-400 border-slate-700'}">
+                        <span class="px-1.5 py-0.5 rounded font-bold border ${pl.isReady ? 'bg-emerald-950/90 text-emerald-300 border-emerald-600/50' : 'bg-slate-900 text-slate-400 border-slate-700'}">
                             ${pl.isReady ? '✅' : '⏳'} ${pl.nick}${pl.isLocal ? ' (Tú)' : ''}
                         </span>
                     `).join('');
 
                     if (OnlineManager.isReady) {
-                        btnToggleReadyOverlay.className = 'w-full py-2 px-3 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow flex items-center justify-center gap-1.5';
+                        btnToggleReadyOverlay.className = 'w-full py-2 px-2.5 rounded-lg bg-emerald-500 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow flex items-center justify-center gap-1.5';
                         btnToggleReadyOverlayIcon.textContent = '✅';
                         btnToggleReadyOverlayText.textContent = '¡ESTOY LISTO! (TOCA PARA CAMBIAR)';
                     } else {
-                        btnToggleReadyOverlay.className = 'w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow animate-pulse flex items-center justify-center gap-1.5';
+                        btnToggleReadyOverlay.className = 'w-full py-2 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow animate-pulse flex items-center justify-center gap-1.5';
                         btnToggleReadyOverlayIcon.textContent = '✋';
                         btnToggleReadyOverlayText.textContent = 'CONFIRMAR QUE ESTOY LISTO';
                     }
@@ -1489,25 +1495,25 @@
                         syncStartBtn.disabled = !stats.allReady;
                         if (syncStartText) {
                             syncStartText.textContent = stats.allReady
-                                ? '🚀 ¡TODOS LISTOS! LANZAR (3, 2, 1...)'
-                                : `⏳ ESPERANDO JUGADORES (${stats.readyCount}/${stats.totalCount} LISTOS)`;
+                                ? '🚀 ¡TODOS LISTOS! LANZAR (3, 2, 1)'
+                                : `⏳ ESPERANDO (${stats.readyCount}/${stats.totalCount} LISTOS)`;
                         }
                     } else {
                         syncStartBtn.disabled = true;
                         if (syncStartText) {
                             syncStartText.textContent = stats.allReady
-                                ? '🚀 ¡TODOS LISTOS! EL ANFITRIÓN INICIARÁ...'
-                                : `⏳ ESPERANDO QUE TODOS ESTÉN LISTOS (${stats.readyCount}/${stats.totalCount})`;
+                                ? '🚀 ¡LISTOS! EL HOST INICIARÁ...'
+                                : `⏳ ESPERANDO LISTOS (${stats.readyCount}/${stats.totalCount})`;
                         }
                     }
                 }
 
                 if (nextTourBtn && !OnlineManager.isHost && TournamentState.active && !TournamentState.completed) {
                     const nextTxt = document.getElementById('btnNextTourText');
-                    if (nextTxt) nextTxt.textContent = '⏳ ESPERANDO QUE EL ANFITRIÓN PASE DE PRUEBA...';
+                    if (nextTxt) nextTxt.textContent = '⏳ ESPERANDO AL ANFITRIÓN...';
                 }
 
-                if (openMainBtnText) openMainBtnText.textContent = `SALA ${OnlineManager.roomCode} (${stats.readyCount}/${totalCount} LISTOS) • VER SALA`;
+                if (openMainBtnText) openMainBtnText.textContent = `SALA ${OnlineManager.roomCode} (${stats.readyCount}/${totalCount} LISTOS)`;
                 banner.textContent = `SALA ${OnlineManager.roomCode} • ${stats.readyCount}/${totalCount} LISTOS`;
                 banner.className = 'text-[10px] text-indigo-400 font-extrabold uppercase truncate';
 
@@ -1587,6 +1593,7 @@
             chargeDir: 1,
             lockedAngle: null,
             takeoffX: 0,
+            landingX: null,
             fieldResult: 0,
             isFoul: false,
             targetBarHeight: 2.15,
@@ -1728,52 +1735,81 @@
 
             updateFieldMode(dt) {
                 if (GameState.phase === 'ACTIVE') {
-                    this.vx = Math.max(0, this.vx - 3.1 * dt);
+                    this.vx = Math.max(0, this.vx - 3.0 * dt);
                     this.x += this.vx * dt;
                     this.animPhase += this.vx * dt * 2.6;
-                    const limitX = GameState.mode === 'highjump' ? HIGH_JUMP_BAR_X + 0.4 : FOUL_LINE_X + 0.35;
+                    const limitX = GameState.mode === 'highjump' ? HIGH_JUMP_BAR_X + 0.35 : FOUL_LINE_X + 0.25;
                     if (this.x > limitX) triggerFieldFoul('¡NULO! LÍNEA PISADA');
                 } else if (GameState.phase === 'FLIGHT') {
                     if (GameState.mode === 'longjump') {
-                        this.x += this.vx * dt; this.y += this.vy * dt; this.vy -= 9.8 * dt;
-                        this.animPhase += dt * 3;
-                        if (this.y <= 0) {
-                            this.y = 0; this.vy = 0; this.isJumping = false;
-                            spawnSandSplash(this.x, 12);
-                            const originX = Math.min(FOUL_LINE_X, GameState.takeoffX + 1.2);
-                            GameState.fieldResult = Math.max(0, this.x - originX);
-                            this.celebrating = true; SoundFX.fanfare();
+                        const prevX = this.x;
+                        const prevY = this.y;
+                        this.x += this.vx * dt;
+                        this.y += this.vy * dt;
+                        this.vy -= 9.8 * dt;
+                        this.animPhase += dt * 3.2;
+
+                        if (this.y <= 0 && this.vy < 0) {
+                            const frac = prevY > 0 ? (prevY / (prevY - this.y)) : 1;
+                            const exactTouchdownX = prevX + (this.x - prevX) * Math.min(1, Math.max(0, frac));
+                            this.x = exactTouchdownX;
+                            this.y = 0;
+                            this.vx = 0;
+                            this.vy = 0;
+                            this.isJumping = false;
+                            GameState.landingX = exactTouchdownX;
+                            spawnSandSplash(this.x, 16);
+
+                            const measureOriginX = Math.min(FOUL_LINE_X, GameState.takeoffX + 0.8);
+                            GameState.fieldResult = Math.max(0, exactTouchdownX - measureOriginX);
+                            this.celebrating = true;
+                            SoundFX.fanfare();
                             this.setFeedback(`${GameState.fieldResult.toFixed(2)}m!`, '#fbbf24');
                             finishFieldEvent();
                         }
                     } else if (GameState.mode === 'javelin') {
-                        this.vx = Math.max(0, this.vx - 12 * dt);
-                        this.x = Math.min(FOUL_LINE_X - 0.1, this.x + this.vx * dt);
+                        this.vx = Math.max(0, this.vx - 16 * dt);
+                        this.x = Math.min(FOUL_LINE_X - 0.15, this.x + this.vx * dt);
+                        if (this.vx > 0.1) this.animPhase += this.vx * dt * 2.0;
                     } else if (GameState.mode === 'highjump') {
                         const prevX = this.x;
-                        this.x += this.vx * dt; this.y += this.vy * dt; this.vy -= 9.8 * dt;
+                        this.x += this.vx * dt;
+                        this.y += this.vy * dt;
+                        this.vy -= 9.8 * dt;
+
                         if (prevX < HIGH_JUMP_BAR_X && this.x >= HIGH_JUMP_BAR_X) {
-                            const clearanceHeight = this.y + 0.42;
+                            const t = (HIGH_JUMP_BAR_X - prevX) / Math.max(0.0001, this.x - prevX);
+                            const yAtBar = (this.y - this.vy * dt) + (this.vy * dt) * t;
+                            const clearanceHeight = yAtBar + 0.44;
                             if (clearanceHeight < GameState.targetBarHeight) {
-                                GameState.barCleared = false; SoundFX.foul();
+                                GameState.barCleared = false;
+                                SoundFX.foul();
                                 this.setFeedback('¡DERRIBO DE LISTÓN!', '#ef4444');
                             } else {
                                 GameState.barCleared = true;
-                                this.setFeedback('¡listón superado!', '#34d399');
+                                this.setFeedback('¡LISTÓN SUPERADO!', '#34d399');
                             }
                         }
-                        const matHeight = this.x >= HIGH_JUMP_BAR_X - 0.5 ? 0.45 : 0;
+                        const matHeight = this.x >= HIGH_JUMP_BAR_X - 0.4 ? 0.45 : 0;
                         if (this.vy < 0 && this.y <= matHeight) {
-                            this.y = matHeight; this.vy = 0; this.vx = 0; this.isJumping = false;
+                            this.y = matHeight;
+                            this.vy = 0;
+                            this.vx = 0;
+                            this.isJumping = false;
                             if (GameState.barCleared && !GameState.isFoul) {
                                 GameState.fieldResult = GameState.targetBarHeight;
-                                this.celebrating = true; SoundFX.fanfare();
+                                this.celebrating = true;
+                                SoundFX.fanfare();
                             } else {
-                                GameState.isFoul = true; GameState.fieldResult = 0;
+                                GameState.isFoul = true;
+                                GameState.fieldResult = 0;
                             }
                             finishFieldEvent();
                         }
                     }
+                } else if (GameState.phase === 'FINISHED') {
+                    this.vx = 0;
+                    this.vy = 0;
                 }
             }
         }
@@ -1783,7 +1819,7 @@
             const p = GameState.player;
             if (!p) return;
             const targetLine = GameState.mode === 'highjump' ? HIGH_JUMP_BAR_X : FOUL_LINE_X;
-            if (p.x < 8) { p.setFeedback('¡CORRE MÁS CERCA!', '#fbbf24'); return; }
+            if (p.x < 10) { p.setFeedback('¡ACÉRCATE MÁS A LA LÍNEA!', '#fbbf24'); return; }
             if (p.x > targetLine + 0.25) { triggerFieldFoul('¡NULO! PASASTE LÍNEA'); return; }
 
             GameState.isChargingAngle = true;
@@ -1798,35 +1834,53 @@
 
             const p = GameState.player;
             const rad = (angleDeg * Math.PI) / 180;
-            const speedRatio = Math.min(1.08, Math.max(0.25, p.vx / 11.6));
+            const speedRatio = Math.min(1.08, Math.max(0.28, p.vx / 11.4));
 
             if (GameState.mode === 'longjump') {
                 if (p.x > FOUL_LINE_X + 0.2) { triggerFieldFoul('¡SALTO NULO!'); return; }
-                GameState.takeoffX = p.x; GameState.phase = 'FLIGHT';
-                p.isJumping = true; SoundFX.jump(); spawnDust(p.x, 1, 7);
-                const boardBonus = Math.max(0.75, 1 - Math.max(0, FOUL_LINE_X - p.x) * 0.04);
-                const v0 = 9.55 * Math.pow(speedRatio, 0.72) * boardBonus;
-                p.vx = v0 * Math.cos(rad); p.vy = v0 * Math.sin(rad);
+                GameState.takeoffX = p.x;
+                GameState.landingX = null;
+                GameState.phase = 'FLIGHT';
+                p.isJumping = true;
+                p.y = 0.02;
+                SoundFX.jump();
+                spawnDust(p.x, 1, 8);
+                const boardBonus = Math.max(0.78, 1 - Math.max(0, FOUL_LINE_X - p.x) * 0.032);
+                const angleEfficiency = Math.max(0.65, 1 - Math.abs(angleDeg - 42) * 0.008);
+                const v0 = 9.65 * Math.pow(speedRatio, 0.70) * boardBonus * angleEfficiency;
+                p.vx = v0 * Math.cos(rad);
+                p.vy = v0 * Math.sin(rad);
                 p.setFeedback(`${angleDeg}°`, Math.abs(angleDeg - 42) <= 7 ? '#34d399' : '#fbbf24');
             } else if (GameState.mode === 'javelin') {
                 if (p.x > FOUL_LINE_X + 0.2) { triggerFieldFoul('¡LANZAMIENTO NULO!'); return; }
-                GameState.takeoffX = p.x; GameState.phase = 'FLIGHT';
-                SoundFX.throwJavelin(); spawnDust(p.x, 1, 6);
-                const v0 = 30.8 * Math.pow(speedRatio, 0.78);
-                GameState.javelin.x = p.x + 0.4; GameState.javelin.y = 1.65;
-                GameState.javelin.vx = v0 * Math.cos(rad); GameState.javelin.vy = v0 * Math.sin(rad);
-                GameState.javelin.angle = rad; GameState.javelin.inAir = true; GameState.javelin.landed = false;
+                GameState.takeoffX = p.x;
+                GameState.phase = 'FLIGHT';
+                SoundFX.throwJavelin();
+                spawnDust(p.x, 1, 6);
+                const angleBonus = Math.max(0.75, 1 - Math.abs(angleDeg - 40) * 0.006);
+                const v0 = 31.2 * Math.pow(speedRatio, 0.76) * angleBonus;
+                GameState.javelin.x = p.x + 0.45;
+                GameState.javelin.y = 1.65;
+                GameState.javelin.vx = v0 * Math.cos(rad);
+                GameState.javelin.vy = v0 * Math.sin(rad);
+                GameState.javelin.angle = rad;
+                GameState.javelin.inAir = true;
+                GameState.javelin.landed = false;
                 p.setFeedback(`¡${angleDeg}°!`, Math.abs(angleDeg - 40) <= 7 ? '#34d399' : '#fbbf24');
             } else if (GameState.mode === 'highjump') {
                 const distToBar = HIGH_JUMP_BAR_X - p.x;
-                if (distToBar < 0.25 || distToBar > 5.5) { triggerFieldFoul('¡POSICIÓN INCORRECTA!'); return; }
-                GameState.takeoffX = p.x; GameState.phase = 'FLIGHT';
-                p.isJumping = true; SoundFX.jump(); spawnDust(p.x, 1, 6);
-                const angleFactor = Math.max(0.55, 1 - Math.abs(angleDeg - 60) / 75);
-                const maxApex = (1.35 + speedRatio * 1.28) * angleFactor;
-                p.vy = Math.sqrt(2 * 9.8 * Math.max(0.8, maxApex - 0.35));
+                if (distToBar < 0.25 || distToBar > 6.5) { triggerFieldFoul(distToBar < 0.25 ? '¡DEMASIADO CERCA!' : '¡DEMASIADO LEJOS!'); return; }
+                GameState.takeoffX = p.x;
+                GameState.phase = 'FLIGHT';
+                p.isJumping = true;
+                p.y = 0.02;
+                SoundFX.jump();
+                spawnDust(p.x, 1, 6);
+                const angleFactor = Math.max(0.55, 1 - Math.abs(angleDeg - 60) / 72);
+                const maxApex = (1.38 + speedRatio * 1.32) * angleFactor;
+                p.vy = Math.sqrt(2 * 9.8 * Math.max(0.85, maxApex - 0.32));
                 const timeToPeak = p.vy / 9.8;
-                p.vx = Math.max(2.8, distToBar / Math.max(0.35, timeToPeak));
+                p.vx = Math.max(2.6, (distToBar + 0.35) / Math.max(0.35, timeToPeak));
                 p.setFeedback(`${angleDeg}°`, Math.abs(angleDeg - 60) <= 8 ? '#34d399' : '#fbbf24');
             }
         }
@@ -1867,6 +1921,7 @@
             }
 
             GameState.isChargingAngle = false; GameState.chargeAngle = 12; GameState.lockedAngle = null;
+            GameState.takeoffX = 0; GameState.landingX = null;
             GameState.fieldResult = 0; GameState.isFoul = false; GameState.barCleared = true;
             GameState.fieldTimeLeft = FIELD_SHOT_CLOCK_MAX;
             GameState.javelin = { x: 0, y: 1.5, vx: 0, vy: 0, angle: 0, inAir: false, landed: false };
@@ -2088,7 +2143,14 @@
         }
 
         function finishFieldEvent() {
-            setTimeout(() => { GameState.phase = 'FINISHED'; showFieldResultsModal(); }, 750);
+            GameState.phase = 'FINISHED';
+            if (GameState.player) {
+                GameState.player.vx = 0;
+                GameState.player.vy = 0;
+            }
+            setTimeout(() => {
+                if (GameState.phase === 'FINISHED') showFieldResultsModal();
+            }, 650);
         }
 
         function showFieldResultsModal(foulReason) {
@@ -2211,8 +2273,17 @@
         btnAction.addEventListener('pointercancel', handleActionRelease);
         window.addEventListener('pointerup', () => { btnAction.classList.remove('pressed'); if (GameState.isChargingAngle) releaseFieldAction(); });
 
+        function isTypingInInput(e) {
+            const active = document.activeElement;
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return true;
+            if (e && e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return true;
+            const onlineModalOpen = !document.getElementById('onlineModal').classList.contains('hidden');
+            if (onlineModalOpen) return true;
+            return false;
+        }
+
         window.addEventListener('keydown', (e) => {
-            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+            if (isTypingInInput(e)) return;
             if (e.repeat) return;
             const c = e.code;
             if (c === 'Space' || c === 'KeyZ' || c === 'KeyX' || c === 'ArrowRight' || c === 'KeyD') { e.preventDefault(); handleRunTap(); }
@@ -2220,7 +2291,7 @@
             else if (c === 'Enter' && (GameState.phase === 'MENU' || GameState.phase === 'FINISHED')) startEventAction();
         });
         window.addEventListener('keyup', (e) => {
-            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+            if (isTypingInInput(e)) return;
             if (['ArrowUp', 'KeyW', 'ShiftLeft'].includes(e.code)) { e.preventDefault(); handleActionRelease(); }
         });
 
@@ -2239,7 +2310,7 @@
                 document.getElementById('hudPrimaryVal').textContent = GameState.elapsedTime.toFixed(2).padStart(5, '0') + 's';
                 document.getElementById('hudSecondaryVal').textContent = `${p ? Math.min(GameState.raceDistance, Math.floor(p.x)) : 0} / ${GameState.raceDistance}m`;
             } else if (GameState.mode === 'longjump') {
-                const liveJump = (GameState.phase === 'FLIGHT' && p) ? Math.max(0, p.x - Math.min(FOUL_LINE_X, GameState.takeoffX + 1.2)) : GameState.fieldResult;
+                const liveJump = (GameState.phase === 'FLIGHT' && p) ? Math.max(0, p.x - Math.min(FOUL_LINE_X, GameState.takeoffX + 0.8)) : GameState.fieldResult;
                 document.getElementById('hudPrimaryVal').textContent = liveJump.toFixed(2) + 'm';
                 document.getElementById('hudSecondaryVal').textContent = GameState.phase === 'ACTIVE' ? `⏱️ ${GameState.fieldTimeLeft.toFixed(1)}s` : (p ? Math.max(0, FOUL_LINE_X - p.x) : FOUL_LINE_X).toFixed(1) + 'm';
             } else if (GameState.mode === 'javelin') {
@@ -2499,8 +2570,37 @@
                 const boardX = playerScreenOffset + (FOUL_LINE_X - GameState.cameraX) * pxPerMeter;
                 ctx.fillStyle = '#ffffff'; ctx.fillRect(boardX - 6, trackTop + laneHeight, 6, laneHeight);
                 ctx.fillStyle = '#ef4444'; ctx.fillRect(boardX, trackTop + laneHeight, 4, laneHeight);
-                const pitStartX = playerScreenOffset + (FOUL_LINE_X + 0.4 - GameState.cameraX) * pxPerMeter;
-                ctx.fillStyle = '#fcd34d'; ctx.fillRect(pitStartX, trackTop + laneHeight * 0.75, 12.5 * pxPerMeter, laneHeight * 1.5);
+                const pitStartX = playerScreenOffset + (FOUL_LINE_X + 0.3 - GameState.cameraX) * pxPerMeter;
+                const pitY = trackTop + laneHeight * 0.65;
+                const pitH = laneHeight * 1.7;
+                ctx.fillStyle = '#d97706'; ctx.fillRect(pitStartX - 3, pitY - 3, 13 * pxPerMeter + 6, pitH + 6);
+                ctx.fillStyle = '#fcd34d'; ctx.fillRect(pitStartX, pitY, 13 * pxPerMeter, pitH);
+
+                for (let d = 2; d <= 10; d += 2) {
+                    const markX = playerScreenOffset + (FOUL_LINE_X + d - GameState.cameraX) * pxPerMeter;
+                    if (markX > -20 && markX < W + 20) {
+                        ctx.strokeStyle = 'rgba(180, 83, 9, 0.45)';
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath(); ctx.moveTo(markX, pitY); ctx.lineTo(markX, pitY + pitH); ctx.stroke();
+                        ctx.fillStyle = '#92400e';
+                        ctx.font = 'bold 8px "Press Start 2P", monospace';
+                        ctx.fillText(`${d}m`, markX, pitY + 12);
+                    }
+                }
+
+                if (GameState.landingX !== null) {
+                    const landScreenX = playerScreenOffset + (GameState.landingX - GameState.cameraX) * pxPerMeter;
+                    ctx.fillStyle = 'rgba(180, 83, 9, 0.7)';
+                    ctx.beginPath();
+                    ctx.ellipse(landScreenX, trackTop + 1.72 * laneHeight + 2, 14, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(landScreenX, pitY);
+                    ctx.lineTo(landScreenX, pitY + pitH);
+                    ctx.stroke();
+                }
             }
 
             if (GameState.mode === 'javelin') {
@@ -2698,11 +2798,24 @@
 
             if (GameState.mode === 'javelin' && GameState.javelin.inAir) {
                 const jav = GameState.javelin;
-                jav.x += jav.vx * dt; jav.y += jav.vy * dt; jav.vy -= 9.8 * dt; jav.angle = Math.atan2(jav.vy, jav.vx);
-                if (jav.y <= 0) {
-                    jav.y = 0; jav.inAir = false; jav.landed = true;
-                    spawnDust(jav.x, 1, 8); GameState.fieldResult = Math.max(0, jav.x - FOUL_LINE_X);
-                    SoundFX.fanfare(); finishFieldEvent();
+                const prevX = jav.x;
+                const prevY = jav.y;
+                jav.x += jav.vx * dt;
+                jav.y += jav.vy * dt;
+                jav.vy -= 9.8 * dt;
+                jav.angle = Math.atan2(jav.vy, jav.vx);
+                if (jav.y <= 0 && jav.vy < 0) {
+                    const frac = prevY > 0 ? (prevY / (prevY - jav.y)) : 1;
+                    jav.x = prevX + (jav.x - prevX) * Math.min(1, Math.max(0, frac));
+                    jav.y = 0;
+                    jav.vx = 0;
+                    jav.vy = 0;
+                    jav.inAir = false;
+                    jav.landed = true;
+                    spawnDust(jav.x, 1, 8);
+                    GameState.fieldResult = Math.max(0, jav.x - FOUL_LINE_X);
+                    SoundFX.fanfare();
+                    finishFieldEvent();
                 }
             }
 
