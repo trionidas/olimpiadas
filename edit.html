@@ -1,0 +1,2858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Olimpiadas Triónicas - Multijugador Online y PWA</title>
+    
+    <meta name="theme-color" content="#020617">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Olimpiadas Triónicas">
+    <link rel="apple-touch-icon" href="https://placehold.co/192x192/f59e0b/0f172a?text=🏆">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@500;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --arcade-yellow: #fbbf24;
+            --arcade-red: #ef4444;
+            --arcade-blue: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            background-color: #020617;
+            color: #f8fafc;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            touch-action: none;
+        }
+
+        .retro-font {
+            font-family: 'Press Start 2P', monospace, sans-serif;
+            line-height: 1.35;
+        }
+
+        .crt-overlay {
+            background: linear-gradient(
+                rgba(18, 16, 16, 0) 50%, 
+                rgba(0, 0, 0, 0.22) 50%
+            );
+            background-size: 100% 4px;
+            pointer-events: none;
+        }
+
+        .btn-arcade-red {
+            background: linear-gradient(180deg, #ff5f5f 0%, #dc2626 100%);
+            box-shadow: 0 5px 0 #7f1d1d, 0 8px 15px rgba(0, 0, 0, 0.45);
+            transition: transform 0.03s ease, box-shadow 0.03s ease;
+        }
+        .btn-arcade-red.pressed {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #7f1d1d, 0 2px 6px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
+        }
+
+        .btn-arcade-blue {
+            background: linear-gradient(180deg, #60a5fa 0%, #2563eb 100%);
+            box-shadow: 0 5px 0 #1e3a8a, 0 8px 15px rgba(0, 0, 0, 0.45);
+            transition: transform 0.03s ease, box-shadow 0.03s ease;
+        }
+        .btn-arcade-blue.pressed {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 #1e3a8a, 0 2px 6px rgba(0, 0, 0, 0.4);
+            background: linear-gradient(180deg, #93c5fd 0%, #3b82f6 100%);
+        }
+
+        .event-tab {
+            transition: all 0.15s ease;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tab-active {
+            background: #f59e0b;
+            color: #020617;
+            box-shadow: 0 3px 0 #b45309;
+            transform: translateY(-1px);
+        }
+        .tab-inactive {
+            background: #1e293b;
+            color: #cbd5e1;
+            box-shadow: 0 3px 0 #090d16;
+        }
+
+        .custom-scroll {
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+        .custom-scroll::-webkit-scrollbar {
+            width: 5px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 9999px;
+        }
+
+        input[type="text"] {
+            user-select: text;
+            -webkit-user-select: text;
+            touch-action: manipulation;
+            font-size: 16px;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body class="flex flex-col justify-between h-[100dvh] w-full max-w-4xl mx-auto px-2 py-1.5 sm:p-3 select-none">
+
+    <header class="w-full flex flex-col gap-1.5 shrink-0">
+        <div class="flex items-center justify-between gap-1.5 min-w-0">
+            <div class="flex items-center gap-2 min-w-0 flex-1">
+                <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-amber-500 flex items-center justify-center text-slate-950 font-black text-base sm:text-lg shadow shrink-0">
+                    🏆
+                </div>
+                <div class="min-w-0 flex-1">
+                    <h1 class="retro-font text-[9px] sm:text-xs text-amber-400 tracking-wider truncate">OLIMPIADAS TRIÓNICAS</h1>
+                    <p id="challengeBanner" class="text-[10px] text-slate-400 font-bold uppercase truncate">Multijugador Online • 5 Pruebas</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
+                <button id="btnInstallPwa" onclick="triggerPwaInstall()" class="hidden px-2 py-1.5 rounded-lg bg-emerald-950 hover:bg-emerald-900 text-emerald-300 text-[11px] font-extrabold border border-emerald-700 items-center gap-1 shadow active:scale-95 transition-transform shrink-0" title="Instalar App">
+                    <span>📲</span> <span class="hidden sm:inline">App</span>
+                </button>
+                <button id="btnOnlineRoom" onclick="openOnlineModal()" class="px-2 sm:px-2.5 py-1.5 rounded-lg bg-indigo-950 hover:bg-indigo-900 text-indigo-300 text-[11px] sm:text-xs font-extrabold border border-indigo-700 flex items-center gap-1.5 shadow active:scale-95 transition-transform max-w-[135px] sm:max-w-none" title="Sala Multijugador Online">
+                    <span id="onlineStatusDot" class="w-2 h-2 rounded-full bg-slate-500 shrink-0"></span>
+                    <span id="onlineBtnText" class="truncate">Sala Online</span>
+                </button>
+                <button onclick="openRecordsModal()" class="px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-400 text-xs font-extrabold border border-slate-700 flex items-center gap-1 shadow active:scale-95 transition-transform shrink-0" title="Ver Récords Guardados">
+                    <span>🏅</span> <span class="hidden sm:inline">Récords</span>
+                </button>
+                <button id="btnSound" onclick="toggleMute()" class="px-2 sm:px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold border border-slate-700 active:scale-95 transition-transform shrink-0" title="Activar/Silenciar Sonido">
+                    <span id="soundIcon">🔊</span>
+                </button>
+            </div>
+        </div>
+
+        <nav class="grid grid-cols-5 gap-1 sm:gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
+            <button id="tab-100m" onclick="selectEvent('100m')" class="event-tab tab-active py-1.5 px-1 rounded-lg font-extrabold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 min-w-0">
+                <span>⚡</span> <span class="truncate">100m</span>
+            </button>
+            <button id="tab-110m" onclick="selectEvent('110m')" class="event-tab tab-inactive py-1.5 px-1 rounded-lg font-extrabold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 min-w-0">
+                <span>🚧</span> <span class="truncate">Vallas</span>
+            </button>
+            <button id="tab-longjump" onclick="selectEvent('longjump')" class="event-tab tab-inactive py-1.5 px-1 rounded-lg font-extrabold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 min-w-0">
+                <span>👟</span> <span class="truncate">Longitud</span>
+            </button>
+            <button id="tab-javelin" onclick="selectEvent('javelin')" class="event-tab tab-inactive py-1.5 px-1 rounded-lg font-extrabold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 min-w-0">
+                <span>🏹</span> <span class="truncate">Jabalina</span>
+            </button>
+            <button id="tab-highjump" onclick="selectEvent('highjump')" class="event-tab tab-inactive py-1.5 px-1 rounded-lg font-extrabold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 min-w-0">
+                <span>🏆</span> <span class="truncate">Altura</span>
+            </button>
+        </nav>
+
+        <!-- Barra de estado del Torneo en curso -->
+        <div id="tournamentTopBar" class="hidden bg-indigo-950/90 border border-indigo-500/60 rounded-xl px-2.5 py-1 flex items-center justify-between gap-2 text-[10px] sm:text-xs shadow">
+            <div class="flex items-center gap-1.5 min-w-0">
+                <span class="px-1.5 py-0.5 rounded bg-amber-400 text-slate-950 font-black uppercase tracking-tight shrink-0" id="tourProgressBadge">JUEGO 1/3</span>
+                <span class="text-indigo-200 font-bold truncate" id="tourCurrentTitle">Torneo Triónico</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+                <span class="text-amber-300 font-extrabold truncate max-w-[140px] sm:max-w-[220px]" id="tourLeaderMini">Líder: -</span>
+                <button onclick="openStandingsModal()" class="px-2 py-0.5 rounded bg-indigo-800 hover:bg-indigo-700 text-white font-bold text-[10px] border border-indigo-600">Tabla</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="w-full flex-1 flex flex-col min-h-0 my-1 relative">
+        <div class="w-full bg-slate-900 border-2 border-slate-700 rounded-t-xl px-2 py-1.5 sm:px-4 sm:py-2 grid grid-cols-12 items-center gap-1.5 shrink-0">
+            <div class="col-span-5 sm:col-span-5 flex items-center gap-2 sm:gap-4 min-w-0">
+                <div class="min-w-0">
+                    <span id="hudPrimaryLabel" class="text-[8px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">Tiempo</span>
+                    <span id="hudPrimaryVal" class="retro-font text-[11px] sm:text-base text-emerald-400 block truncate">00.00s</span>
+                </div>
+                <div class="min-w-0">
+                    <span id="hudSecondaryLabel" class="text-[8px] sm:text-[10px] text-slate-400 uppercase font-bold block truncate">Distancia</span>
+                    <span id="hudSecondaryVal" class="retro-font text-[11px] sm:text-base text-white block truncate">0/100m</span>
+                </div>
+            </div>
+
+            <div class="col-span-4 sm:col-span-4 px-1 min-w-0">
+                <div class="flex justify-between items-center text-[8px] sm:text-[10px] font-bold uppercase mb-0.5 gap-1">
+                    <span class="text-amber-400 truncate">Potencia</span>
+                    <span id="hudSpeedText" class="text-white shrink-0">0.0 km/h</span>
+                </div>
+                <div class="w-full h-2 sm:h-2.5 bg-slate-950 rounded-full overflow-hidden border border-slate-700 p-0.5">
+                    <div id="hudSpeedBar" class="h-full w-0 bg-gradient-to-r from-emerald-500 via-amber-400 to-red-500 rounded-full transition-all duration-75"></div>
+                </div>
+            </div>
+
+            <div class="col-span-3 sm:col-span-3 text-right min-w-0">
+                <span class="text-[8px] sm:text-[10px] text-amber-400 uppercase font-bold block truncate">Récord</span>
+                <span id="hudRecord" class="retro-font text-[11px] sm:text-sm text-amber-300 block truncate">9.85s</span>
+            </div>
+        </div>
+
+        <div id="canvasWrapper" class="w-full flex-1 min-h-0 bg-sky-900 relative overflow-hidden border-x-2 border-b-2 border-slate-700 rounded-b-xl shadow-2xl">
+            <canvas id="gameCanvas"></canvas>
+            <div class="crt-overlay absolute inset-0"></div>
+
+            <!-- Modal Principal de Evento y Resultados -->
+            <div id="overlayModal" class="absolute inset-0 bg-slate-950/88 backdrop-blur-sm flex items-center justify-center p-1.5 sm:p-3 z-20">
+                <div class="bg-slate-900 border-2 border-amber-500 rounded-2xl p-2.5 sm:p-4 max-w-md w-full max-h-full overflow-y-auto custom-scroll text-center shadow-2xl flex flex-col justify-between gap-1.5">
+                    <div>
+                        <div class="flex items-center justify-center gap-1.5 flex-wrap mb-0.5">
+                            <span id="modalBadge" class="inline-block px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[9px] sm:text-[10px] font-bold uppercase">
+                                100 Metros Lisos
+                            </span>
+                            <span id="modalTourStepBadge" class="hidden px-2 py-0.5 rounded-full bg-indigo-500/30 border border-indigo-400/50 text-indigo-200 text-[9px] sm:text-[10px] font-extrabold uppercase">
+                                Prueba 1 de 3
+                            </span>
+                        </div>
+                        <h2 id="modalTitle" class="retro-font text-[11px] sm:text-sm text-white mb-0.5 break-words">¡PREPARADO EN PISTA!</h2>
+                        <p id="modalDesc" class="text-[10px] sm:text-xs text-slate-300 mb-1.5 leading-tight">
+                            Toca rápidamente el botón <strong class="text-red-400">CORRER</strong> para alcanzar la máxima velocidad.
+                        </p>
+
+                        <div id="arcadeNameBox" class="mb-1.5 bg-slate-950 px-2.5 py-1.5 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
+                            <span class="text-[10px] text-amber-400 uppercase font-bold text-left leading-tight shrink-0">Tu Nombre:</span>
+                            <input type="text" id="playerNickInput" maxlength="8" value="" placeholder="TU NOMBRE" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="this.value = this.value.toUpperCase()" onchange="syncNickInputs(this.value)" class="bg-slate-900 border border-amber-500/60 rounded-lg px-2 py-1 text-center font-black text-white placeholder-slate-500 w-36 uppercase tracking-wider outline-none focus:border-amber-400">
+                        </div>
+
+                        <div id="highJumpSelector" class="hidden mb-1.5 bg-slate-950 p-1.5 rounded-xl border border-slate-800">
+                            <span class="text-[9px] text-amber-400 uppercase font-bold block mb-1">Altura del Listón:</span>
+                            <div class="flex flex-wrap justify-center gap-1" id="barHeightButtons"></div>
+                        </div>
+
+                        <div id="resultsBox" class="hidden bg-slate-950/90 rounded-xl p-1.5 mb-1.5 border border-slate-800 text-left space-y-1 max-h-28 overflow-y-auto custom-scroll">
+                            <div id="resultsList" class="space-y-1 text-[10px] sm:text-xs"></div>
+                        </div>
+
+                        <div id="onlineReadyOverlayBox" class="hidden bg-indigo-950/85 border border-indigo-500/60 rounded-xl p-2 mb-1.5 text-left space-y-1.5">
+                            <div class="flex items-center justify-between gap-1">
+                                <span class="text-[9px] sm:text-[10px] font-black uppercase tracking-wider text-indigo-300 truncate">SALA ONLINE • PREPARADOS</span>
+                                <span id="overlayReadyCounter" class="px-2 py-0.5 rounded-full bg-slate-900 text-amber-400 font-extrabold text-[9px] border border-amber-500/40 shrink-0">0/0 LISTOS</span>
+                            </div>
+                            <div id="overlayReadyRoster" class="flex flex-wrap gap-1 text-[9px] max-h-14 overflow-y-auto custom-scroll"></div>
+                            <button id="btnToggleReadyOverlay" onclick="toggleMyReadyState()" class="w-full py-2 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                                <span id="btnToggleReadyOverlayIcon" class="shrink-0">✋</span>
+                                <span id="btnToggleReadyOverlayText" class="truncate">CONFIRMAR QUE ESTOY LISTO</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-1 shrink-0">
+                        <button id="btnStartRace" onclick="startEventAction()" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs sm:text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+                            <span>🏁</span> <span id="btnStartText" class="truncate">EMPEZAR PRUEBA</span>
+                        </button>
+                        <button id="btnOnlineSyncStart" onclick="hostTriggerOnlineStart()" class="hidden w-full py-2 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-45 disabled:pointer-events-none">
+                            <span class="shrink-0">🚀</span> <span id="btnOnlineSyncStartText" class="truncate">LANZAR PRUEBA</span>
+                        </button>
+                        <button id="btnNextTournamentEvent" onclick="hostAdvanceTournament()" class="hidden w-full py-2 px-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-[10px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1.5">
+                            <span class="shrink-0">⏭️</span> <span id="btnNextTourText" class="truncate">SIGUIENTE PRUEBA</span>
+                        </button>
+                        <div class="grid grid-cols-2 gap-1">
+                            <button id="btnOpenOnlineMain" onclick="openOnlineModal()" class="col-span-2 py-1.5 px-2.5 rounded-xl bg-indigo-950/90 hover:bg-indigo-900 text-indigo-200 border border-indigo-500/50 font-extrabold text-[10px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition-transform flex items-center justify-center gap-1">
+                                <span class="shrink-0">🌐</span> <span id="btnOpenOnlineMainText" class="truncate">SALA ONLINE</span>
+                            </button>
+                            <button id="btnWhatsAppShare" onclick="shareChallengeOnWhatsApp()" class="hidden col-span-2 py-1.5 px-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-black text-[10px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition-transform flex items-center justify-center gap-1">
+                                <span class="shrink-0">📲</span> <span class="truncate">RETAR POR WHATSAPP</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="w-full shrink-0 pb-0.5">
+        <div class="bg-slate-900 border-2 border-slate-800 rounded-2xl p-1.5 sm:p-2.5 shadow-xl">
+            <div class="grid grid-cols-2 gap-2 sm:gap-4">
+                <button id="btnRun" class="btn-arcade-red rounded-xl py-3 sm:py-4 px-2 flex flex-col items-center justify-center text-white cursor-pointer relative overflow-hidden min-w-0">
+                    <div class="flex items-center justify-center gap-1.5 mb-0.5 pointer-events-none w-full">
+                        <span class="text-base sm:text-2xl shrink-0">👟</span>
+                        <span id="runBtnLabel" class="retro-font text-xs sm:text-lg tracking-wider truncate">CORRER</span>
+                    </div>
+                    <span id="runBtnSubtext" class="text-[9px] sm:text-xs font-extrabold uppercase tracking-wide text-red-100 bg-black/30 px-2 py-0.5 rounded-full pointer-events-none truncate max-w-full">
+                        ¡Toca Rápido!
+                    </span>
+                </button>
+
+                <button id="btnAction" class="btn-arcade-blue rounded-xl py-3 sm:py-4 px-2 flex flex-col items-center justify-center text-white cursor-pointer relative overflow-hidden min-w-0">
+                    <div class="flex items-center justify-center gap-1.5 mb-0.5 pointer-events-none w-full">
+                        <span id="actionBtnIcon" class="text-base sm:text-2xl shrink-0">🚀</span>
+                        <span id="actionBtnLabel" class="retro-font text-xs sm:text-lg tracking-wider truncate">SALTAR</span>
+                    </div>
+                    <span id="actionBtnSubtext" class="text-[9px] sm:text-xs font-extrabold uppercase tracking-wide text-blue-100 bg-black/30 px-2 py-0.5 rounded-full pointer-events-none truncate max-w-full">
+                        Mantén ángulo
+                    </span>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Modal Récords -->
+    <div id="recordsModal" class="hidden fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
+        <div class="bg-slate-900 border-2 border-amber-500 rounded-2xl w-full max-w-md max-h-[90dvh] overflow-y-auto custom-scroll p-4 sm:p-5 flex flex-col gap-3 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2.5">
+                <div class="flex items-center gap-2 min-w-0">
+                    <span class="text-xl shrink-0">🏅</span>
+                    <span class="retro-font text-xs sm:text-sm text-amber-400 truncate">RÉCORDS PERSONALES</span>
+                </div>
+                <button onclick="closeRecordsModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs shrink-0">✕</button>
+            </div>
+            <p class="text-[11px] sm:text-xs text-slate-400 leading-relaxed">Tus mejores marcas guardadas en este dispositivo:</p>
+            <div id="recordsModalList" class="space-y-2 my-1"></div>
+            <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-800">
+                <button onclick="resetAllRecords()" class="px-3 py-2 rounded-xl bg-red-950/60 hover:bg-red-900/70 text-red-300 border border-red-800/50 font-bold text-xs transition-colors">🗑️ Reiniciar</button>
+                <button onclick="closeRecordsModal()" class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sala Online + Selector de Campeonato (Único ID limpio y sin duplicados) -->
+    <div id="onlineModal" class="hidden fixed inset-0 bg-slate-950/92 backdrop-blur-md z-50 flex items-center justify-center p-2 sm:p-4">
+        <div class="bg-slate-900 border-2 border-indigo-500 rounded-2xl w-full max-w-md max-h-[96dvh] overflow-y-auto custom-scroll p-3 sm:p-4 flex flex-col gap-2 shadow-2xl">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                <div class="flex items-center gap-1.5 min-w-0">
+                    <span class="text-base sm:text-lg shrink-0">🌐</span>
+                    <span class="retro-font text-[10px] sm:text-xs text-indigo-400 truncate">SALA Y TORNEO ONLINE</span>
+                </div>
+                <button onclick="closeOnlineModal()" class="px-2.5 py-0.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs shrink-0">✕</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 bg-slate-950 p-2 rounded-xl border border-slate-800">
+                <div>
+                    <label class="text-[9px] text-amber-400 uppercase font-bold block mb-0.5 truncate">1. Tu Nombre</label>
+                    <input id="onlineNickInput" type="text" maxlength="8" value="" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="this.value = this.value.toUpperCase()" onchange="syncNickInputs(this.value)" placeholder="TU NOMBRE" class="w-full bg-slate-900 border border-amber-500/50 rounded-lg px-2 py-1 text-center font-black text-white placeholder-slate-500 uppercase outline-none focus:border-amber-400">
+                </div>
+                <div>
+                    <label class="text-[9px] text-indigo-400 uppercase font-bold block mb-0.5 truncate">2. Código Sala</label>
+                    <input id="onlineRoomInput" type="text" maxlength="10" value="" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')" placeholder="EJ: PISTA1" class="w-full bg-slate-900 border border-indigo-500/60 rounded-lg px-2 py-1 text-center font-black text-indigo-300 placeholder-slate-500 uppercase outline-none focus:border-indigo-400">
+                </div>
+            </div>
+
+            <!-- Configuración del Torneo (1, 3 o 5 Pruebas) -->
+            <div id="hostTournamentConfigBox" class="bg-slate-950 p-2 rounded-xl border border-slate-800 space-y-1.5">
+                <div class="flex items-center justify-between gap-1">
+                    <span class="text-[9px] sm:text-[10px] text-emerald-400 uppercase font-extrabold truncate">3. Formato (Anfitrión)</span>
+                    <span class="text-[9px] text-slate-400 font-bold shrink-0">1º=10, 2º=6, 3º=4</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5">
+                    <button id="tourLenBtn-1" onclick="selectTournamentLength(1)" class="py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-slate-900 text-slate-300 border-slate-700 leading-tight">
+                        🥇 1 Prueba<br><span class="text-[8px] font-normal text-slate-400">Actual</span>
+                    </button>
+                    <button id="tourLenBtn-3" onclick="selectTournamentLength(3)" class="py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-amber-500 text-slate-950 border-amber-300 shadow leading-tight">
+                        🔥 3 Pruebas<br><span class="text-[8px] font-bold text-slate-900">Triatlón</span>
+                    </button>
+                    <button id="tourLenBtn-5" onclick="selectTournamentLength(5)" class="py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-slate-900 text-slate-300 border-slate-700 leading-tight">
+                        👑 5 Pruebas<br><span class="text-[8px] font-normal text-slate-400">Pentatlón</span>
+                    </button>
+                </div>
+                <p id="tourEventsPreview" class="text-[9px] text-slate-400 text-center font-medium leading-tight truncate">
+                    Pruebas: ⚡ 100m • 👟 Longitud • 🏹 Jabalina
+                </p>
+            </div>
+
+            <div id="onlineStatusBox" class="bg-slate-950 rounded-xl p-2 border border-slate-800 text-xs space-y-1.5">
+                <div class="flex items-center justify-between gap-2">
+                    <span id="onlineStatusLabel" class="font-extrabold text-[11px] text-slate-400 truncate">Desconectado</span>
+                    <span id="modalReadyCounterBadge" class="text-[10px] font-black text-amber-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800 shrink-0">OFFLINE</span>
+                </div>
+                <div id="onlinePlayersList" class="flex flex-col gap-1 text-[10px] text-slate-300 max-h-24 overflow-y-auto custom-scroll">
+                    <span class="text-slate-500 italic">Conéctate a una sala o inicia un torneo</span>
+                </div>
+                <button id="btnModalReadyToggle" onclick="toggleMyReadyState()" class="hidden w-full py-2 px-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                    <span id="btnModalReadyIcon" class="shrink-0">✋</span>
+                    <span id="btnModalReadyText" class="truncate">ESTOY LISTO / PREPARADO</span>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-1.5 pt-0.5">
+                <button id="btnConnectOnline" onclick="joinOnlineRoom()" class="col-span-2 py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform truncate">
+                    🔗 Conectar a Sala Online
+                </button>
+                <button id="btnStartTournamentNow" onclick="hostStartNewTournament()" class="col-span-2 py-2 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all disabled:opacity-45 disabled:pointer-events-none truncate">
+                    🏆 Iniciar Torneo
+                </button>
+                <button id="btnDisconnectOnline" onclick="disconnectOnlineRoom()" class="hidden col-span-2 py-1.5 px-3 rounded-xl bg-red-950/70 hover:bg-red-900 text-red-300 border border-red-800/60 font-bold text-[10px] uppercase">
+                    Salir de la Sala
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Clasificación General y Ganador del Torneo -->
+    <div id="standingsModal" class="hidden fixed inset-0 bg-slate-950/92 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-6">
+        <div class="bg-slate-900 border-2 border-amber-400 rounded-2xl w-full max-w-md max-h-[92dvh] overflow-y-auto custom-scroll p-4 sm:p-5 flex flex-col gap-3 shadow-2xl text-center">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                <span class="text-[10px] font-black uppercase tracking-widest text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-400/30" id="standingsBadge">
+                    CLASIFICACIÓN DEL TORNEO
+                </span>
+                <button onclick="closeStandingsModal()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs">✕</button>
+            </div>
+
+            <div id="winnerBannerBox" class="hidden bg-gradient-to-b from-amber-500/25 via-amber-500/10 to-slate-950 border-2 border-amber-400 rounded-2xl p-3.5 shadow-xl">
+                <div class="text-3xl sm:text-4xl mb-1 animate-bounce">👑🏆🎉</div>
+                <div class="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-0.5">¡CAMPEÓN ABSOLUTO!</div>
+                <div id="winnerNameDisplay" class="retro-font text-base sm:text-xl text-white tracking-wider my-1 break-words">GANADOR: ATLETA</div>
+                <div id="winnerPointsDisplay" class="text-xs font-extrabold text-emerald-400">30 Puntos Olímpicos</div>
+            </div>
+
+            <div class="text-left space-y-1.5">
+                <div class="flex justify-between text-[10px] text-slate-400 uppercase font-bold px-2">
+                    <span>Posición / Atleta</span>
+                    <span>Puntos Totales</span>
+                </div>
+                <div id="standingsTableBody" class="space-y-1.5"></div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2 pt-2 border-t border-slate-800">
+                <button id="btnResetTour" onclick="resetTournamentSession()" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs flex-1">
+                    🔄 Nuevo Torneo
+                </button>
+                <button onclick="closeStandingsModal()" class="py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider flex-1 shadow">
+                    Continuar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let deferredPwaPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPwaPrompt = e;
+            const btn = document.getElementById('btnInstallPwa');
+            if (btn) {
+                btn.classList.remove('hidden');
+                btn.classList.add('flex');
+            }
+        });
+
+        function triggerPwaInstall() {
+            if (!deferredPwaPrompt) return;
+            deferredPwaPrompt.prompt();
+            deferredPwaPrompt.userChoice.then(() => {
+                deferredPwaPrompt = null;
+                const btn = document.getElementById('btnInstallPwa');
+                if (btn) btn.classList.add('hidden');
+            });
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const manifestBlob = new Blob([JSON.stringify({
+                    name: "Olimpiadas Triónicas - Torneo Online",
+                    short_name: "OlimpiadasTrío",
+                    start_url: "./",
+                    display: "standalone",
+                    orientation: "portrait",
+                    background_color: "#020617",
+                    theme_color: "#020617",
+                    icons: [{ src: "https://placehold.co/192x192/f59e0b/0f172a?text=🏆", sizes: "192x192", type: "image/png" }]
+                })], { type: 'application/json' });
+                const manifestURL = URL.createObjectURL(manifestBlob);
+                const link = document.createElement('link');
+                link.rel = 'manifest';
+                link.href = manifestURL;
+                document.head.appendChild(link);
+            });
+        }
+
+        const PEER_ICE_CONFIG = {
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' }
+                ]
+            }
+        };
+
+        const SoundFX = {
+            ctx: null,
+            muted: false,
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+            },
+            beep(freq = 440, duration = 0.09, type = 'square', vol = 0.11) {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(); osc.stop(this.ctx.currentTime + duration);
+                } catch (e) {}
+            },
+            step() { this.beep(155 + Math.random() * 65, 0.04, 'triangle', 0.08); },
+            jump() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(200, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(680, this.ctx.currentTime + 0.22);
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.22);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(); osc.stop(this.ctx.currentTime + 0.22);
+                } catch (e) {}
+            },
+            throwJavelin() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, this.ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(880, this.ctx.currentTime + 0.28);
+                    gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+                    gain.gain.linearRampToValueAtTime(0.01, this.ctx.currentTime + 0.28);
+                    osc.connect(gain); gain.connect(this.ctx.destination);
+                    osc.start(); osc.stop(this.ctx.currentTime + 0.28);
+                } catch (e) {}
+            },
+            foul() {
+                this.beep(110, 0.28, 'sawtooth', 0.2);
+                setTimeout(() => this.beep(85, 0.32, 'sawtooth', 0.2), 120);
+            },
+            pistolShot() {
+                if (this.muted || !this.ctx) return;
+                try {
+                    const bufferSize = this.ctx.sampleRate * 0.22;
+                    const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                    const data = buffer.getChannelData(0);
+                    for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.05));
+                    const noise = this.ctx.createBufferSource();
+                    noise.buffer = buffer;
+                    const gain = this.ctx.createGain();
+                    gain.gain.setValueAtTime(0.28, this.ctx.currentTime);
+                    noise.connect(gain); gain.connect(this.ctx.destination);
+                    noise.start();
+                } catch (e) {}
+            },
+            fanfare() {
+                if (this.muted) return;
+                [523.25, 659.25, 783.99, 1046.5].forEach((n, i) => setTimeout(() => this.beep(n, 0.16, 'square', 0.13), i * 105));
+            }
+        };
+
+        function toggleMute() {
+            SoundFX.muted = !SoundFX.muted;
+            document.getElementById('soundIcon').textContent = SoundFX.muted ? '🔇' : '🔊';
+        }
+
+        function getFallbackAthleteNick() {
+            if (!window._fallbackNick) {
+                window._fallbackNick = 'ATLETA' + Math.floor(10 + Math.random() * 89);
+            }
+            return window._fallbackNick;
+        }
+
+        function getEffectivePlayerNick() {
+            return OnlineManager.myNick || getFallbackAthleteNick();
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const challenger = params.get('reto');
+            const mode = params.get('modo');
+            const score = params.get('marca');
+            if (challenger && mode && score) {
+                const banner = document.getElementById('challengeBanner');
+                banner.textContent = `¡RETADO POR ${challenger.toUpperCase()} (${score})!`;
+                banner.className = 'text-[10px] text-emerald-400 font-extrabold uppercase animate-pulse';
+                if (EVENT_CONFIGS[mode]) selectEvent(mode);
+            }
+        });
+
+        function shareChallengeOnWhatsApp() {
+            const rawInput = (document.getElementById('playerNickInput').value || '').trim().toUpperCase();
+            const nick = rawInput || getEffectivePlayerNick();
+            const cfg = EVENT_CONFIGS[GameState.mode];
+            const marcaVal = GameState.fieldResult > 0 ? GameState.fieldResult.toFixed(2) + cfg.unit : (GameState.player && GameState.player.finishTime ? GameState.player.finishTime.toFixed(2) + cfg.unit : '0.00');
+            const currentUrl = window.location.href.split('?')[0];
+            const shareUrl = `${currentUrl}?reto=${encodeURIComponent(nick)}&modo=${GameState.mode}&marca=${encodeURIComponent(marcaVal)}`;
+            const text = `🏆 ¡Te retó *${nick}* en Olimpiadas Triónicas! (${cfg.title})\nMi marca es *${marcaVal}*. ¿Puedes superarla?\n👉 Juega aquí: ${shareUrl}`;
+            window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+        }
+
+        const DEFAULT_RECORDS = { '100m': 9.85, '110m': 13.10, 'longjump': 8.45, 'javelin': 86.50, 'highjump': 2.30 };
+
+        function loadSavedRecords() {
+            try {
+                const raw = localStorage.getItem('trionic_olympics_records_v1');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    Object.keys(DEFAULT_RECORDS).forEach(k => { if (typeof parsed[k] === 'number' && !isNaN(parsed[k])) GameState.records[k] = parsed[k]; });
+                }
+            } catch (e) {}
+        }
+
+        function saveRecordsToLocal() {
+            try { localStorage.setItem('trionic_olympics_records_v1', JSON.stringify(GameState.records)); } catch (e) {}
+        }
+
+        function openRecordsModal() {
+            const modal = document.getElementById('recordsModal');
+            const list = document.getElementById('recordsModalList');
+            const icons = { '100m': '⚡', '110m': '🚧', 'longjump': '👟', 'javelin': '🏹', 'highjump': '🏆' };
+
+            list.innerHTML = Object.keys(EVENT_CONFIGS).map(key => {
+                const cfg = EVENT_CONFIGS[key];
+                const rec = GameState.records[key];
+                const isCustom = Math.abs(rec - DEFAULT_RECORDS[key]) > 0.001;
+                return `
+                    <div class="flex items-center justify-between px-3.5 py-2.5 rounded-xl bg-slate-950 border ${isCustom ? 'border-amber-500/50' : 'border-slate-800'}">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-base">${icons[key]}</span>
+                            <div>
+                                <div class="text-xs font-extrabold text-white">${cfg.title}</div>
+                                <div class="text-[10px] text-slate-400">${isCustom ? '⭐ Récord batido' : 'Marca Base'}</div>
+                            </div>
+                        </div>
+                        <span class="retro-font text-xs sm:text-sm ${isCustom ? 'text-amber-400' : 'text-emerald-400'}">${rec.toFixed(2)}${cfg.unit}</span>
+                    </div>
+                `;
+            }).join('');
+            modal.classList.remove('hidden');
+        }
+
+        function closeRecordsModal() { document.getElementById('recordsModal').classList.add('hidden'); }
+
+        function resetAllRecords() {
+            Object.keys(DEFAULT_RECORDS).forEach(k => GameState.records[k] = DEFAULT_RECORDS[k]);
+            try { localStorage.removeItem('trionic_olympics_records_v1'); } catch (e) {}
+            updateHUD();
+            openRecordsModal();
+        }
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        const HURDLE_POSITIONS_110M = [13.72, 22.86, 32.00, 41.14, 50.28, 59.42, 68.56, 77.70, 86.84, 95.98];
+        const FOUL_LINE_X = 40;
+        const HIGH_JUMP_BAR_X = 35;
+        const HIGH_JUMP_HEIGHTS = [2.00, 2.15, 2.25, 2.35, 2.45];
+        const FIELD_SHOT_CLOCK_MAX = 15.0;
+        const POSITION_POINTS = [10, 6, 4, 2, 1];
+        const TOURNAMENT_PRESETS = {
+            1: ['100m'],
+            3: ['100m', 'longjump', 'javelin'],
+            5: ['100m', 'longjump', 'javelin', '110m', 'highjump']
+        };
+
+        const TournamentState = {
+            active: false,
+            totalGames: 3,
+            eventsQueue: ['100m', 'longjump', 'javelin'],
+            currentIndex: 0,
+            standings: {},
+            eventScoredForIndex: -1,
+            completed: false,
+            winnerNick: '',
+            winnerPoints: 0
+        };
+
+        const OnlineManager = {
+            peer: null,
+            isHost: false,
+            connected: false,
+            roomCode: '',
+            myId: '',
+            myNick: '',
+            isReady: false,
+            hostConn: null,
+            clientConns: [],
+            remotePlayers: {},
+            syncTimer: null
+        };
+
+        function syncNickInputs(val) {
+            const clean = (val || '').trim().toUpperCase().slice(0, 8);
+            OnlineManager.myNick = clean;
+            const pInput = document.getElementById('playerNickInput');
+            const oInput = document.getElementById('onlineNickInput');
+            if (pInput && pInput.value.toUpperCase() !== clean) pInput.value = clean;
+            if (oInput && oInput.value.toUpperCase() !== clean) oInput.value = clean;
+            if (GameState.player) GameState.player.name = getEffectivePlayerNick();
+            savePersistentSession();
+            if (OnlineManager.connected) {
+                sendImmediatePlayerUpdate();
+                refreshOnlineUI();
+            }
+        }
+
+        function toggleMyReadyState() {
+            SoundFX.init();
+            OnlineManager.isReady = !OnlineManager.isReady;
+            SoundFX.beep(OnlineManager.isReady ? 660 : 330, 0.1, 'square', 0.12);
+            sendImmediatePlayerUpdate();
+            refreshOnlineUI();
+        }
+
+        function getRoomReadyStats() {
+            if (!OnlineManager.connected) {
+                return { readyCount: 1, totalCount: 1, allReady: true, players: [] };
+            }
+            const remotes = Object.values(OnlineManager.remotePlayers);
+            const allPlayers = [
+                { id: OnlineManager.myId || 'local', nick: getEffectivePlayerNick(), isReady: !!OnlineManager.isReady, isLocal: true },
+                ...remotes.map(r => ({ id: r.id, nick: r.nick || 'ATLETA', isReady: !!r.isReady, isLocal: false }))
+            ];
+            const readyCount = allPlayers.filter(p => p.isReady).length;
+            const totalCount = allPlayers.length;
+            return {
+                readyCount,
+                totalCount,
+                allReady: totalCount > 0 && readyCount === totalCount,
+                players: allPlayers
+            };
+        }
+
+        function sendImmediatePlayerUpdate() {
+            if (!OnlineManager.connected) return;
+            if (OnlineManager.isHost) {
+                broadcastRoomRoster();
+            } else if (OnlineManager.hostConn && OnlineManager.hostConn.open) {
+                OnlineManager.hostConn.send({
+                    type: 'STATE_UPDATE',
+                    player: getLocalPlayerSnapshot()
+                });
+            }
+        }
+
+        function savePersistentSession() {
+            try {
+                const payload = {
+                    myNick: OnlineManager.myNick,
+                    roomCode: OnlineManager.roomCode,
+                    tournament: TournamentState,
+                    updatedAt: Date.now()
+                };
+                localStorage.setItem('trionic_session_v2', JSON.stringify(payload));
+            } catch (e) {}
+        }
+
+        function loadPersistentSession() {
+            try {
+                const raw = localStorage.getItem('trionic_session_v2');
+                if (!raw) return;
+                const data = JSON.parse(raw);
+                if (typeof data.myNick === 'string' && data.myNick !== 'TRIONIC') {
+                    OnlineManager.myNick = data.myNick;
+                    const pInput = document.getElementById('playerNickInput');
+                    const oInput = document.getElementById('onlineNickInput');
+                    if (pInput) pInput.value = data.myNick;
+                    if (oInput) oInput.value = data.myNick;
+                }
+                if (data.tournament && typeof data.tournament === 'object') {
+                    Object.assign(TournamentState, data.tournament);
+                    if (!Array.isArray(TournamentState.eventsQueue) || TournamentState.eventsQueue.length === 0) {
+                        TournamentState.eventsQueue = [...(TOURNAMENT_PRESETS[TournamentState.totalGames] || TOURNAMENT_PRESETS[3])];
+                    }
+                    highlightTournamentButtonsUI(TournamentState.totalGames || 3);
+                    updateTournamentTopBar();
+                }
+            } catch (e) {}
+        }
+
+        function highlightTournamentButtonsUI(numGames) {
+            [1, 3, 5].forEach(n => {
+                const btn = document.getElementById('tourLenBtn-' + n);
+                if (!btn) return;
+                if (n === numGames) {
+                    btn.className = 'py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-amber-500 text-slate-950 border-amber-300 shadow leading-tight';
+                } else {
+                    btn.className = 'py-1.5 px-1 rounded-lg font-extrabold text-[10px] border transition-all bg-slate-900 text-slate-300 border-slate-700 leading-tight';
+                }
+            });
+
+            const queueToPreview = (numGames === 1)
+                ? [GameState.mode || '100m']
+                : (TOURNAMENT_PRESETS[numGames] || TOURNAMENT_PRESETS[3]);
+            const namesMap = { '100m': '⚡ 100m', '110m': '🚧 Vallas', 'longjump': '👟 Longitud', 'javelin': '🏹 Jabalina', 'highjump': '🏆 Altura' };
+            const previewEl = document.getElementById('tourEventsPreview');
+            if (previewEl) {
+                previewEl.textContent = 'Pruebas: ' + queueToPreview.map(e => namesMap[e]).join(' • ');
+            }
+        }
+
+        function selectTournamentLength(numGames, skipSave = false) {
+            if (OnlineManager.connected && !OnlineManager.isHost && !skipSave) return;
+
+            TournamentState.totalGames = numGames;
+            if (!TournamentState.active) {
+                if (numGames === 1) {
+                    TournamentState.eventsQueue = [GameState.mode || '100m'];
+                } else {
+                    TournamentState.eventsQueue = [...(TOURNAMENT_PRESETS[numGames] || TOURNAMENT_PRESETS[3])];
+                }
+            }
+            highlightTournamentButtonsUI(numGames);
+            if (!skipSave) savePersistentSession();
+        }
+
+        function hostStartNewTournament() {
+            if (OnlineManager.connected && !OnlineManager.isHost) {
+                toggleMyReadyState();
+                return;
+            }
+
+            if (OnlineManager.connected && OnlineManager.isHost) {
+                const stats = getRoomReadyStats();
+                if (!stats.allReady) {
+                    setOnlineStatus(`Esperando a que todos estén LISTOS (${stats.readyCount}/${stats.totalCount})`, 'text-amber-400');
+                    SoundFX.foul();
+                    return;
+                }
+            }
+
+            const rawNick = (document.getElementById('onlineNickInput').value || document.getElementById('playerNickInput').value || '').trim().toUpperCase();
+            syncNickInputs(rawNick);
+
+            const chosenLen = Number(TournamentState.totalGames) || 3;
+            if (chosenLen === 1) {
+                TournamentState.eventsQueue = [GameState.mode || '100m'];
+            } else {
+                TournamentState.eventsQueue = [...(TOURNAMENT_PRESETS[chosenLen] || TOURNAMENT_PRESETS[3])];
+            }
+
+            TournamentState.active = true;
+            TournamentState.currentIndex = 0;
+            TournamentState.eventScoredForIndex = -1;
+            TournamentState.completed = false;
+            TournamentState.winnerNick = '';
+            TournamentState.winnerPoints = 0;
+            TournamentState.standings = {};
+
+            const myKey = getEffectivePlayerNick();
+            TournamentState.standings[myKey] = { nick: myKey, points: 0, wins: 0, lastMark: '-' };
+
+            const remotes = Object.values(OnlineManager.remotePlayers);
+            if (remotes.length > 0) {
+                remotes.forEach(r => {
+                    const rKey = (r.nick || 'RIVAL').toUpperCase();
+                    TournamentState.standings[rKey] = { nick: rKey, points: 0, wins: 0, lastMark: '-' };
+                });
+            } else {
+                TournamentState.standings['ATLETA 1'] = { nick: 'ATLETA 1', points: 0, wins: 0, lastMark: '-', isAI: true };
+                TournamentState.standings['ATLETA 2'] = { nick: 'ATLETA 2', points: 0, wins: 0, lastMark: '-', isAI: true };
+            }
+
+            const firstEvent = TournamentState.eventsQueue[0];
+            selectEvent(firstEvent, true);
+            updateTournamentTopBar();
+            savePersistentSession();
+            closeOnlineModal();
+
+            if (OnlineManager.connected && OnlineManager.isHost) {
+                broadcastTournamentState(true);
+                hostTriggerOnlineStart(true);
+            }
+        }
+
+        function broadcastTournamentState(forceSwitchEvent = false) {
+            if (!OnlineManager.connected || !OnlineManager.isHost) return;
+            const currentPlannedMode = TournamentState.eventsQueue[TournamentState.currentIndex] || GameState.mode;
+            const packet = {
+                type: 'TOURNAMENT_SYNC',
+                tournament: TournamentState,
+                forceMode: currentPlannedMode,
+                forceSwitchEvent
+            };
+            OnlineManager.clientConns.forEach(c => {
+                if (c.open) c.send(packet);
+            });
+        }
+
+        function hostAdvanceTournament() {
+            if (!TournamentState.active) return;
+            if (OnlineManager.connected && !OnlineManager.isHost) return;
+
+            if (TournamentState.currentIndex + 1 < TournamentState.eventsQueue.length) {
+                TournamentState.currentIndex += 1;
+                const nextMode = TournamentState.eventsQueue[TournamentState.currentIndex];
+                OnlineManager.isReady = false;
+                Object.values(OnlineManager.remotePlayers).forEach(r => { r.isReady = false; });
+
+                selectEvent(nextMode, true);
+                updateTournamentTopBar();
+                savePersistentSession();
+                if (OnlineManager.connected && OnlineManager.isHost) {
+                    broadcastTournamentState(true);
+                    broadcastRoomRoster();
+                }
+                refreshOnlineUI();
+            } else {
+                finalizeTournamentCeremony();
+            }
+        }
+
+        function finalizeTournamentCeremony() {
+            TournamentState.completed = true;
+            const sorted = Object.values(TournamentState.standings).sort((a, b) => b.points - a.points || b.wins - a.wins);
+            if (sorted.length > 0) {
+                TournamentState.winnerNick = sorted[0].nick;
+                TournamentState.winnerPoints = sorted[0].points;
+            }
+            SoundFX.fanfare();
+            updateTournamentTopBar();
+            savePersistentSession();
+            if (OnlineManager.connected && OnlineManager.isHost) {
+                broadcastTournamentState(false);
+            }
+            openStandingsModal();
+        }
+
+        function resetTournamentSession() {
+            TournamentState.active = false;
+            TournamentState.completed = false;
+            TournamentState.currentIndex = 0;
+            TournamentState.eventScoredForIndex = -1;
+            TournamentState.standings = {};
+            savePersistentSession();
+            updateTournamentTopBar();
+            closeStandingsModal();
+            openOnlineModal();
+        }
+
+        function awardTournamentPointsForEvent(rankedParticipants) {
+            if (!TournamentState.active) return;
+            if (TournamentState.eventScoredForIndex === TournamentState.currentIndex) return;
+            TournamentState.eventScoredForIndex = TournamentState.currentIndex;
+
+            rankedParticipants.forEach((participant, idx) => {
+                const cleanNick = (participant.rawNick || participant.name || 'ATLETA').replace('🌐 ', '').replace('👻 ', '').trim().toUpperCase();
+                if (!TournamentState.standings[cleanNick]) {
+                    TournamentState.standings[cleanNick] = { nick: cleanNick, points: 0, wins: 0, lastMark: '-' };
+                }
+                const pts = participant.isFoul ? 0 : (POSITION_POINTS[idx] || 1);
+                TournamentState.standings[cleanNick].points += pts;
+                if (idx === 0 && !participant.isFoul) {
+                    TournamentState.standings[cleanNick].wins += 1;
+                }
+                TournamentState.standings[cleanNick].lastMark = participant.displayMark || '-';
+                participant.earnedPoints = pts;
+            });
+
+            if (TournamentState.currentIndex + 1 >= TournamentState.eventsQueue.length) {
+                TournamentState.completed = true;
+                const sorted = Object.values(TournamentState.standings).sort((a, b) => b.points - a.points || b.wins - a.wins);
+                if (sorted.length > 0) {
+                    TournamentState.winnerNick = sorted[0].nick;
+                    TournamentState.winnerPoints = sorted[0].points;
+                }
+            }
+
+            updateTournamentTopBar();
+            savePersistentSession();
+            if (OnlineManager.connected && OnlineManager.isHost) {
+                broadcastTournamentState(false);
+            }
+        }
+
+        function updateTournamentTopBar() {
+            const bar = document.getElementById('tournamentTopBar');
+            const badge = document.getElementById('tourProgressBadge');
+            const titleEl = document.getElementById('tourCurrentTitle');
+            const leaderEl = document.getElementById('tourLeaderMini');
+            const modalStepBadge = document.getElementById('modalTourStepBadge');
+
+            if (!TournamentState.active) {
+                if (bar) bar.classList.add('hidden');
+                if (modalStepBadge) modalStepBadge.classList.add('hidden');
+                return;
+            }
+
+            if (bar) bar.classList.remove('hidden');
+            const stepText = `JUEGO ${TournamentState.currentIndex + 1}/${TournamentState.eventsQueue.length}`;
+            if (badge) badge.textContent = TournamentState.completed ? 'FINALIZADO' : stepText;
+
+            const currentMode = TournamentState.eventsQueue[TournamentState.currentIndex] || GameState.mode;
+            const cfg = EVENT_CONFIGS[currentMode];
+            if (titleEl) titleEl.textContent = TournamentState.completed ? `🏆 Ganador: ${TournamentState.winnerNick}` : cfg.title;
+
+            const sorted = Object.values(TournamentState.standings).sort((a, b) => b.points - a.points);
+            if (leaderEl) {
+                leaderEl.textContent = sorted.length > 0 ? `1º ${sorted[0].nick} (${sorted[0].points} pts)` : 'Sin puntos';
+            }
+
+            if (modalStepBadge) {
+                modalStepBadge.classList.remove('hidden');
+                modalStepBadge.textContent = TournamentState.completed
+                    ? `🏆 CAMPEÓN: ${TournamentState.winnerNick}`
+                    : `TORNEO: PRUEBA ${TournamentState.currentIndex + 1} DE ${TournamentState.eventsQueue.length}`;
+            }
+        }
+
+        function openStandingsModal() {
+            const modal = document.getElementById('standingsModal');
+            const winnerBox = document.getElementById('winnerBannerBox');
+            const winnerName = document.getElementById('winnerNameDisplay');
+            const winnerPts = document.getElementById('winnerPointsDisplay');
+            const tbody = document.getElementById('standingsTableBody');
+            const badge = document.getElementById('standingsBadge');
+
+            const sorted = Object.values(TournamentState.standings).sort((a, b) => b.points - a.points || b.wins - a.wins);
+
+            if (TournamentState.completed && sorted.length > 0) {
+                winnerBox.classList.remove('hidden');
+                winnerName.textContent = `GANADOR: ${sorted[0].nick}`;
+                winnerPts.textContent = `${sorted[0].points} Puntos Olímpicos • ${sorted[0].wins} Victorias`;
+                badge.textContent = `TORNEO FINALIZADO (${TournamentState.eventsQueue.length} PRUEBAS)`;
+            } else {
+                winnerBox.classList.add('hidden');
+                badge.textContent = `CLASIFICACIÓN (PRUEBA ${TournamentState.currentIndex + 1} DE ${TournamentState.eventsQueue.length})`;
+            }
+
+            const medals = ['🥇', '🥈', '🥉', '4º', '5º', '6º'];
+            if (sorted.length === 0) {
+                tbody.innerHTML = `<div class="text-xs text-slate-400 text-center py-3">Aún no hay puntuaciones registradas.</div>`;
+            } else {
+                const myEffective = getEffectivePlayerNick();
+                tbody.innerHTML = sorted.map((st, idx) => {
+                    const isMe = st.nick === myEffective;
+                    return `
+                        <div class="flex items-center justify-between px-3 py-2 rounded-xl border ${idx === 0 ? 'bg-amber-500/20 border-amber-400/60 text-white' : (isMe ? 'bg-indigo-950/60 border-indigo-500/50 text-indigo-100' : 'bg-slate-950 border-slate-800 text-slate-300')}">
+                            <div class="flex items-center gap-2 min-w-0">
+                                <span class="text-sm font-black shrink-0">${medals[idx] || (idx + 1) + 'º'}</span>
+                                <div class="min-w-0">
+                                    <div class="text-xs font-extrabold truncate">${st.nick} ${isMe ? '(Tú)' : ''}</div>
+                                    <div class="text-[10px] text-slate-400">Victorias: ${st.wins} • Última: ${st.lastMark || '-'}</div>
+                                </div>
+                            </div>
+                            <span class="retro-font text-xs sm:text-sm text-amber-400 shrink-0">${st.points} PTS</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeStandingsModal() {
+            document.getElementById('standingsModal').classList.add('hidden');
+        }
+
+        function openOnlineModal() {
+            const mainNick = document.getElementById('playerNickInput').value;
+            if (mainNick) {
+                document.getElementById('onlineNickInput').value = mainNick.toUpperCase();
+            }
+            highlightTournamentButtonsUI(TournamentState.totalGames || 3);
+            document.getElementById('onlineModal').classList.remove('hidden');
+            refreshOnlineUI();
+        }
+
+        function closeOnlineModal() {
+            document.getElementById('onlineModal').classList.add('hidden');
+        }
+
+        function joinOnlineRoom() {
+            const roomInputEl = document.getElementById('onlineRoomInput');
+            const rawRoom = (roomInputEl.value || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+            const rawNick = (document.getElementById('onlineNickInput').value || document.getElementById('playerNickInput').value || '').trim().toUpperCase().slice(0, 8);
+            if (!rawRoom) {
+                setOnlineStatus('⚠️ Escribe un código de sala arriba', 'text-amber-400');
+                roomInputEl.focus();
+                SoundFX.foul();
+                return;
+            }
+            roomInputEl.value = rawRoom;
+
+            syncNickInputs(rawNick);
+
+            if (OnlineManager.connected && OnlineManager.roomCode === rawRoom && OnlineManager.peer && !OnlineManager.peer.destroyed) {
+                setOnlineStatus(
+                    OnlineManager.isHost
+                        ? `Anfitrión activo en Sala ${rawRoom}`
+                        : `Conectado a Sala ${rawRoom}`,
+                    'text-emerald-400'
+                );
+                sendImmediatePlayerUpdate();
+                refreshOnlineUI();
+                return;
+            }
+
+            OnlineManager.roomCode = rawRoom;
+            OnlineManager.isReady = false;
+            savePersistentSession();
+
+            disconnectOnlineRoom(true);
+            setOnlineStatus('Conectando a sala ' + rawRoom + '...', 'text-amber-400');
+
+            const hostPeerId = `trionic-olympics-room-${rawRoom}`;
+            try {
+                const peer = new Peer(hostPeerId, PEER_ICE_CONFIG);
+                OnlineManager.peer = peer;
+
+                peer.on('open', (id) => {
+                    OnlineManager.isHost = true;
+                    OnlineManager.connected = true;
+                    OnlineManager.myId = id;
+                    OnlineManager.isReady = true;
+                    setOnlineStatus(`Anfitrión en Sala ${rawRoom}`, 'text-emerald-400');
+                    startSyncLoop();
+                    refreshOnlineUI();
+                });
+
+                peer.on('connection', (conn) => {
+                    setupHostClientConnection(conn);
+                });
+
+                peer.on('error', (err) => {
+                    if (err.type === 'unavailable-id') {
+                        try { peer.destroy(); } catch (e) {}
+                        connectAsClientToRoom(rawRoom, hostPeerId);
+                    } else {
+                        setOnlineStatus('Error de red P2P (' + err.type + ')', 'text-red-400');
+                    }
+                });
+            } catch (e) {
+                setOnlineStatus('No se pudo iniciar PeerJS', 'text-red-400');
+            }
+        }
+
+        function connectAsClientToRoom(roomCode, hostPeerId) {
+            setOnlineStatus(`Uniéndose a Sala ${roomCode}...`, 'text-amber-400');
+            const clientPeer = new Peer(undefined, PEER_ICE_CONFIG);
+            OnlineManager.peer = clientPeer;
+            OnlineManager.isHost = false;
+
+            clientPeer.on('open', (myId) => {
+                OnlineManager.myId = myId;
+                const conn = clientPeer.connect(hostPeerId, { reliable: true });
+                OnlineManager.hostConn = conn;
+
+                conn.on('open', () => {
+                    OnlineManager.connected = true;
+                    OnlineManager.isReady = false;
+                    setOnlineStatus(`Conectado a Sala ${roomCode}`, 'text-emerald-400');
+                    conn.send({
+                        type: 'HELLO',
+                        player: getLocalPlayerSnapshot()
+                    });
+                    startSyncLoop();
+                    refreshOnlineUI();
+                });
+
+                conn.on('data', (data) => {
+                    handleNetworkData(data, conn);
+                });
+
+                conn.on('close', () => {
+                    setOnlineStatus('El anfitrión cerró la sala', 'text-amber-400');
+                    disconnectOnlineRoom();
+                });
+
+                conn.on('error', () => {
+                    setOnlineStatus('Error al enlazar con el anfitrión', 'text-red-400');
+                });
+            });
+
+            clientPeer.on('error', (err) => {
+                setOnlineStatus('No se pudo conectar (' + (err.type || 'red') + ')', 'text-red-400');
+            });
+        }
+
+        function setupHostClientConnection(conn) {
+            OnlineManager.clientConns = OnlineManager.clientConns.filter(c => c.peer !== conn.peer);
+            OnlineManager.clientConns.push(conn);
+
+            conn.on('open', () => {
+                broadcastRoomRoster();
+            });
+
+            conn.on('data', (data) => {
+                handleNetworkData(data, conn);
+            });
+            conn.on('close', () => {
+                OnlineManager.clientConns = OnlineManager.clientConns.filter(c => c !== conn);
+                if (conn.peer && OnlineManager.remotePlayers[conn.peer]) {
+                    delete OnlineManager.remotePlayers[conn.peer];
+                }
+                broadcastRoomRoster();
+                refreshOnlineUI();
+            });
+        }
+
+        function getLocalPlayerSnapshot() {
+            const p = GameState.player;
+            return {
+                id: OnlineManager.myId || 'local',
+                nick: getEffectivePlayerNick(),
+                isReady: !!OnlineManager.isReady,
+                mode: GameState.mode,
+                x: p ? Number(p.x.toFixed(2)) : 0,
+                y: p ? Number(p.y.toFixed(2)) : 0,
+                vx: p ? Number(p.vx.toFixed(2)) : 0,
+                animPhase: p ? Number(p.animPhase.toFixed(2)) : 0,
+                isJumping: p ? p.isJumping : false,
+                celebrating: p ? p.celebrating : false,
+                finishTime: p ? p.finishTime : null,
+                fieldResult: GameState.fieldResult || 0,
+                isFoul: GameState.isFoul || false,
+                javInAir: GameState.javelin.inAir,
+                javLanded: GameState.javelin.landed,
+                javX: Number(GameState.javelin.x.toFixed(2)),
+                javY: Number(GameState.javelin.y.toFixed(2)),
+                javAngle: Number(GameState.javelin.angle.toFixed(2)),
+                updatedAt: Date.now()
+            };
+        }
+
+        function handleNetworkData(data, sourceConn) {
+            if (!data || !data.type) return;
+
+            if (data.type === 'HELLO' || data.type === 'STATE_UPDATE') {
+                if (data.player && data.player.id) {
+                    if (sourceConn && !sourceConn.peer) sourceConn.peer = data.player.id;
+                    if (data.player.id !== OnlineManager.myId) {
+                        OnlineManager.remotePlayers[data.player.id] = data.player;
+                        const rNick = (data.player.nick || 'ATLETA').toUpperCase();
+                        if (TournamentState.active && !TournamentState.standings[rNick]) {
+                            TournamentState.standings[rNick] = { nick: rNick, points: 0, wins: 0, lastMark: '-' };
+                        }
+                    }
+                }
+                if (OnlineManager.isHost) {
+                    broadcastRoomRoster();
+                }
+                refreshOnlineUI();
+            } else if (data.type === 'ROOM_SNAPSHOT') {
+                if (data.players) {
+                    const nextRemote = {};
+                    Object.values(data.players).forEach(pl => {
+                        if (pl.id !== OnlineManager.myId) nextRemote[pl.id] = pl;
+                    });
+                    OnlineManager.remotePlayers = nextRemote;
+                }
+                if (data.tournament && !OnlineManager.isHost) {
+                    const prevIdx = TournamentState.currentIndex;
+                    const wasActive = TournamentState.active;
+                    const wasCompleted = TournamentState.completed;
+                    Object.assign(TournamentState, data.tournament);
+                    highlightTournamentButtonsUI(TournamentState.totalGames || 3);
+
+                    const expectedMode = TournamentState.eventsQueue?.[TournamentState.currentIndex];
+                    if (TournamentState.active && expectedMode) {
+                        if ((!wasActive || prevIdx !== TournamentState.currentIndex || GameState.mode !== expectedMode) && GameState.phase !== 'ACTIVE' && GameState.phase !== 'FLIGHT' && GameState.phase !== 'COUNTDOWN') {
+                            selectEvent(expectedMode, true);
+                        }
+                    }
+                    if (!wasCompleted && TournamentState.completed) {
+                        openStandingsModal();
+                    }
+                    updateTournamentTopBar();
+                    savePersistentSession();
+                }
+                refreshOnlineUI();
+            } else if (data.type === 'TOURNAMENT_SYNC') {
+                if (data.tournament) {
+                    Object.assign(TournamentState, data.tournament);
+                    highlightTournamentButtonsUI(TournamentState.totalGames || 3);
+                    updateTournamentTopBar();
+                    savePersistentSession();
+                }
+                if (data.forceSwitchEvent) {
+                    OnlineManager.isReady = false;
+                }
+                const targetMode = data.forceMode || TournamentState.eventsQueue?.[TournamentState.currentIndex];
+                if (targetMode && EVENT_CONFIGS[targetMode] && (data.forceSwitchEvent || GameState.mode !== targetMode)) {
+                    selectEvent(targetMode, true);
+                }
+                if (data.TournamentCompleted || TournamentState.completed) {
+                    openStandingsModal();
+                }
+                refreshOnlineUI();
+            } else if (data.type === 'START_EVENT') {
+                closeOnlineModal();
+                closeStandingsModal();
+                if (data.tournament) {
+                    Object.assign(TournamentState, data.tournament);
+                    updateTournamentTopBar();
+                }
+                if (data.mode && EVENT_CONFIGS[data.mode] && GameState.mode !== data.mode) {
+                    selectEvent(data.mode, true);
+                }
+                if (data.targetBarHeight) {
+                    GameState.targetBarHeight = data.targetBarHeight;
+                }
+                startEventAction(true);
+            }
+        }
+
+        function broadcastRoomRoster() {
+            if (!OnlineManager.isHost) return;
+            const allPlayers = {};
+            allPlayers[OnlineManager.myId] = getLocalPlayerSnapshot();
+            Object.values(OnlineManager.remotePlayers).forEach(p => {
+                allPlayers[p.id] = p;
+            });
+            const packet = {
+                type: 'ROOM_SNAPSHOT',
+                players: allPlayers,
+                tournament: TournamentState
+            };
+            OnlineManager.clientConns.forEach(c => {
+                if (c.open) c.send(packet);
+            });
+        }
+
+        function startSyncLoop() {
+            if (OnlineManager.syncTimer) clearInterval(OnlineManager.syncTimer);
+            OnlineManager.syncTimer = setInterval(() => {
+                if (!OnlineManager.connected) return;
+                if (OnlineManager.isHost) {
+                    broadcastRoomRoster();
+                } else if (OnlineManager.hostConn && OnlineManager.hostConn.open) {
+                    OnlineManager.hostConn.send({
+                        type: 'STATE_UPDATE',
+                        player: getLocalPlayerSnapshot()
+                    });
+                }
+            }, 65);
+        }
+
+        function hostTriggerOnlineStart(bypassReadyCheck = false) {
+            if (!OnlineManager.connected) {
+                startEventAction(false);
+                return;
+            }
+            if (!OnlineManager.isHost) {
+                toggleMyReadyState();
+                return;
+            }
+
+            const stats = getRoomReadyStats();
+            if (!bypassReadyCheck && !stats.allReady) {
+                SoundFX.foul();
+                return;
+            }
+
+            if (TournamentState.active && TournamentState.eventsQueue[TournamentState.currentIndex]) {
+                const expectedMode = TournamentState.eventsQueue[TournamentState.currentIndex];
+                if (GameState.mode !== expectedMode) {
+                    selectEvent(expectedMode, true);
+                }
+            }
+
+            const packet = {
+                type: 'START_EVENT',
+                mode: GameState.mode,
+                targetBarHeight: GameState.targetBarHeight,
+                tournament: TournamentState
+            };
+            OnlineManager.clientConns.forEach(c => { if (c.open) c.send(packet); });
+            startEventAction(true);
+        }
+
+        function disconnectOnlineRoom(silent = false) {
+            if (OnlineManager.syncTimer) {
+                clearInterval(OnlineManager.syncTimer);
+                OnlineManager.syncTimer = null;
+            }
+            if (OnlineManager.peer) {
+                try { OnlineManager.peer.destroy(); } catch (e) {}
+                OnlineManager.peer = null;
+            }
+            OnlineManager.connected = false;
+            OnlineManager.isHost = false;
+            OnlineManager.isReady = false;
+            OnlineManager.hostConn = null;
+            OnlineManager.clientConns = [];
+            OnlineManager.remotePlayers = {};
+            if (!silent) {
+                setOnlineStatus('Desconectado', 'text-slate-400');
+                refreshOnlineUI();
+            }
+        }
+
+        function setOnlineStatus(text, colorClass) {
+            const lbl = document.getElementById('onlineStatusLabel');
+            if (lbl) {
+                lbl.textContent = text;
+                lbl.className = 'font-extrabold text-[11px] truncate ' + colorClass;
+            }
+        }
+
+        function refreshOnlineUI() {
+            const dot = document.getElementById('onlineStatusDot');
+            const btnText = document.getElementById('onlineBtnText');
+            const disBtn = document.getElementById('btnDisconnectOnline');
+            const connectBtn = document.getElementById('btnConnectOnline');
+            const startTourBtn = document.getElementById('btnStartTournamentNow');
+            const modalReadyBtn = document.getElementById('btnModalReadyToggle');
+            const modalReadyIcon = document.getElementById('btnModalReadyIcon');
+            const modalReadyText = document.getElementById('btnModalReadyText');
+            const modalReadyBadge = document.getElementById('modalReadyCounterBadge');
+            const listEl = document.getElementById('onlinePlayersList');
+            const syncStartBtn = document.getElementById('btnOnlineSyncStart');
+            const syncStartText = document.getElementById('btnOnlineSyncStartText');
+            const btnStartRace = document.getElementById('btnStartRace');
+            const openMainBtnText = document.getElementById('btnOpenOnlineMainText');
+            const banner = document.getElementById('challengeBanner');
+            const hostConfigBox = document.getElementById('hostTournamentConfigBox');
+            const nextTourBtn = document.getElementById('btnNextTournamentEvent');
+
+            const overlayReadyBox = document.getElementById('onlineReadyOverlayBox');
+            const overlayReadyCounter = document.getElementById('overlayReadyCounter');
+            const overlayReadyRoster = document.getElementById('overlayReadyRoster');
+            const btnToggleReadyOverlay = document.getElementById('btnToggleReadyOverlay');
+            const btnToggleReadyOverlayIcon = document.getElementById('btnToggleReadyOverlayIcon');
+            const btnToggleReadyOverlayText = document.getElementById('btnToggleReadyOverlayText');
+
+            const stats = getRoomReadyStats();
+            const totalCount = OnlineManager.connected ? stats.totalCount : 0;
+
+            if (modalReadyBadge) {
+                modalReadyBadge.textContent = OnlineManager.connected ? `${stats.readyCount}/${stats.totalCount} LISTOS` : 'OFFLINE';
+                modalReadyBadge.className = `text-[10px] font-black px-2 py-0.5 rounded border border-slate-800 shrink-0 ${stats.allReady ? 'text-emerald-400 bg-slate-900' : 'text-amber-400 bg-slate-900'}`;
+            }
+
+            if (OnlineManager.connected) {
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0';
+                btnText.textContent = `${OnlineManager.roomCode} (${stats.readyCount}/${totalCount} ✅)`;
+                disBtn.classList.remove('hidden');
+                if (connectBtn) connectBtn.textContent = '🔄 Actualizar Nombre en Sala';
+
+                if (modalReadyBtn) {
+                    modalReadyBtn.classList.remove('hidden');
+                    if (OnlineManager.isReady) {
+                        modalReadyBtn.className = 'w-full py-2 px-2.5 rounded-xl bg-emerald-500 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow flex items-center justify-center gap-1.5';
+                        modalReadyIcon.textContent = '✅';
+                        modalReadyText.textContent = 'ESTÁS LISTO (TOCA PARA CAMBIAR)';
+                    } else {
+                        modalReadyBtn.className = 'w-full py-2 px-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow animate-pulse flex items-center justify-center gap-1.5';
+                        modalReadyIcon.textContent = '✋';
+                        modalReadyText.textContent = 'PULSA AQUÍ CUANDO ESTÉS LISTO';
+                    }
+                }
+
+                if (hostConfigBox) {
+                    hostConfigBox.style.opacity = OnlineManager.isHost ? '1' : '0.6';
+                }
+
+                if (startTourBtn) {
+                    if (OnlineManager.isHost) {
+                        startTourBtn.disabled = !stats.allReady;
+                        startTourBtn.textContent = stats.allReady
+                            ? `🏆 Iniciar Torneo (${TournamentState.totalGames} Pruebas)`
+                            : `⏳ Esperando Listos (${stats.readyCount}/${stats.totalCount})`;
+                    } else {
+                        startTourBtn.disabled = false;
+                        startTourBtn.textContent = OnlineManager.isReady ? '✅ Listo (Esperando Anfitrión)' : '✋ Marcarme como Listo';
+                    }
+                }
+
+                if (overlayReadyBox) {
+                    overlayReadyBox.classList.remove('hidden');
+                    overlayReadyCounter.textContent = `${stats.readyCount}/${stats.totalCount} LISTOS`;
+                    overlayReadyCounter.className = `px-2 py-0.5 rounded-full bg-slate-900 font-extrabold text-[9px] border shrink-0 ${stats.allReady ? 'text-emerald-400 border-emerald-500/50' : 'text-amber-400 border-amber-500/40'}`;
+                    overlayReadyRoster.innerHTML = stats.players.map(pl => `
+                        <span class="px-1.5 py-0.5 rounded font-bold border ${pl.isReady ? 'bg-emerald-950/90 text-emerald-300 border-emerald-600/50' : 'bg-slate-900 text-slate-400 border-slate-700'}">
+                            ${pl.isReady ? '✅' : '⏳'} ${pl.nick}${pl.isLocal ? ' (Tú)' : ''}
+                        </span>
+                    `).join('');
+
+                    if (OnlineManager.isReady) {
+                        btnToggleReadyOverlay.className = 'w-full py-2 px-2.5 rounded-lg bg-emerald-500 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow flex items-center justify-center gap-1.5';
+                        btnToggleReadyOverlayIcon.textContent = '✅';
+                        btnToggleReadyOverlayText.textContent = '¡ESTOY LISTO! (TOCA PARA CAMBIAR)';
+                    } else {
+                        btnToggleReadyOverlay.className = 'w-full py-2 px-2.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-[11px] sm:text-xs uppercase tracking-wider shadow animate-pulse flex items-center justify-center gap-1.5';
+                        btnToggleReadyOverlayIcon.textContent = '✋';
+                        btnToggleReadyOverlayText.textContent = 'CONFIRMAR QUE ESTOY LISTO';
+                    }
+                }
+
+                if (btnStartRace) btnStartRace.classList.add('hidden');
+
+                if (syncStartBtn) {
+                    syncStartBtn.classList.remove('hidden');
+                    if (OnlineManager.isHost) {
+                        syncStartBtn.disabled = !stats.allReady;
+                        if (syncStartText) {
+                            syncStartText.textContent = stats.allReady
+                                ? '🚀 ¡TODOS LISTOS! LANZAR (3, 2, 1)'
+                                : `⏳ ESPERANDO (${stats.readyCount}/${stats.totalCount} LISTOS)`;
+                        }
+                    } else {
+                        syncStartBtn.disabled = true;
+                        if (syncStartText) {
+                            syncStartText.textContent = stats.allReady
+                                ? '🚀 ¡LISTOS! EL HOST INICIARÁ...'
+                                : `⏳ ESPERANDO LISTOS (${stats.readyCount}/${stats.totalCount})`;
+                        }
+                    }
+                }
+
+                if (nextTourBtn && !OnlineManager.isHost && TournamentState.active && !TournamentState.completed) {
+                    const nextTxt = document.getElementById('btnNextTourText');
+                    if (nextTxt) nextTxt.textContent = '⏳ ESPERANDO AL ANFITRIÓN...';
+                }
+
+                if (openMainBtnText) openMainBtnText.textContent = `SALA ${OnlineManager.roomCode} (${stats.readyCount}/${totalCount} LISTOS)`;
+                banner.textContent = `SALA ${OnlineManager.roomCode} • ${stats.readyCount}/${totalCount} LISTOS`;
+                banner.className = 'text-[10px] text-indigo-400 font-extrabold uppercase truncate';
+
+                const rows = stats.players.map(pl => {
+                    const pts = TournamentState.standings[(pl.nick || '').toUpperCase()]?.points || 0;
+                    const badgeReady = pl.isReady
+                        ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-black">✅ LISTO</span>'
+                        : '<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black">⏳ ESPERANDO</span>';
+                    return `
+                        <div class="flex items-center justify-between gap-1 px-2.5 py-1.5 rounded-lg ${pl.isLocal ? 'bg-amber-500/20 border border-amber-400/40 text-amber-200' : 'bg-indigo-500/20 border border-indigo-400/40 text-indigo-200'} font-bold">
+                            <span class="truncate">${pl.isLocal ? '👤' : '⚡'} ${pl.nick} ${pl.isLocal && OnlineManager.isHost ? '(Host)' : ''}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                ${badgeReady}
+                                <span class="retro-font text-[10px] text-amber-300">${pts} PTS</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                listEl.innerHTML = rows.join('');
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-slate-500 shrink-0';
+                btnText.textContent = 'Sala Online';
+                disBtn.classList.add('hidden');
+                if (connectBtn) connectBtn.textContent = '🔗 Conectar a Sala Online';
+                if (modalReadyBtn) modalReadyBtn.classList.add('hidden');
+                if (overlayReadyBox) overlayReadyBox.classList.add('hidden');
+                if (btnStartRace) btnStartRace.classList.remove('hidden');
+                if (syncStartBtn) syncStartBtn.classList.add('hidden');
+                if (startTourBtn) {
+                    startTourBtn.disabled = false;
+                    startTourBtn.textContent = '🏆 Iniciar Torneo Local';
+                }
+                if (openMainBtnText) openMainBtnText.textContent = 'CREAR / UNIRSE A SALA ONLINE';
+                if (TournamentState.active) {
+                    const sorted = Object.values(TournamentState.standings).sort((a, b) => b.points - a.points);
+                    listEl.innerHTML = sorted.map(s => `
+                        <div class="flex items-center justify-between px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-200 font-bold">
+                            <span class="truncate">🏆 ${s.nick}</span>
+                            <span class="retro-font text-[10px] text-amber-400 shrink-0">${s.points} PTS</span>
+                        </div>
+                    `).join('');
+                } else {
+                    listEl.innerHTML = `<span class="text-slate-500 italic">Conéctate con el mismo código o inicia un torneo</span>`;
+                }
+            }
+            updateTournamentTopBar();
+        }
+
+        const EVENT_CONFIGS = {
+            '100m': { title: '100 Metros Lisos', headline: '¡ESPRINT PURO DE 100M!', desc: 'Toca repetidamente el botón rojo <strong>CORRER</strong> para acelerar al máximo hasta la meta.', runLabel: 'CORRER', runSub: '¡Toca rápido!', actionIcon: '💨', actionLabel: 'IMPULSO', actionSub: 'Inclinación en meta', primaryHud: 'Tiempo', secondaryHud: 'Distancia', unit: 's', better: 'lower' },
+            '110m': { title: '110 Metros Vallas', headline: '¡110M CON 10 VALLAS!', desc: 'Corre a toda velocidad con el botón rojo y toca <strong>SALTAR</strong> antes de cada valla.', runLabel: 'CORRER', runSub: '¡Toca rápido!', actionIcon: '🚧', actionLabel: 'SALTAR', actionSub: 'Toca antes de la valla', primaryHud: 'Tiempo', secondaryHud: 'Distancia', unit: 's', better: 'lower' },
+            'longjump': { title: 'Salto de Longitud', headline: '¡SALTO DE LONGITUD!', desc: 'Corre hasta la tabla de 40m. <strong>MANTÉN PULSADO SALTAR</strong> para subir el ángulo (óptimo <strong>42°</strong>) y <strong>SUELTA</strong> para despegar.', runLabel: 'CORRER', runSub: 'Acelera en pasillo', actionIcon: '📐', actionLabel: 'SALTAR', actionSub: 'Mantén y suelta (42°)', primaryHud: 'Salto', secondaryHud: 'Batida', unit: 'm', better: 'higher' },
+            'javelin': { title: 'Lanzamiento de Jabalina', headline: '¡JABALINA OLÍMPICA!', desc: 'Corre y antes de los 40m, <strong>MANTÉN PULSADO LANZAR</strong> para ajustar el ángulo (óptimo <strong>40°</strong>) y <strong>SUELTA</strong>.', runLabel: 'CORRER', runSub: 'Gana impulso', actionIcon: '🏹', actionLabel: 'LANZAR', actionSub: 'Mantén y suelta (40°)', primaryHud: 'Marca', secondaryHud: 'Línea', unit: 'm', better: 'higher' },
+            'highjump': { title: 'Salto de Altura', headline: '¡SALTO DE ALTURA!', desc: 'Corre hacia el listón (35m). <strong>MANTÉN PULSADO SALTAR</strong> para ajustar el ángulo vertical (óptimo <strong>60°</strong>) y <strong>SUELTA</strong>.', runLabel: 'CORRER', runSub: 'Toma velocidad', actionIcon: '🏆', actionLabel: 'SALTAR', actionSub: 'Mantén y suelta (60°)', primaryHud: 'Listón', secondaryHud: 'Aprox.', unit: 'm', better: 'higher' }
+        };
+
+        const GameState = {
+            mode: '100m',
+            phase: 'MENU',
+            raceDistance: 100,
+            elapsedTime: 0,
+            countdownText: '',
+            cameraX: 0,
+            records: { ...DEFAULT_RECORDS },
+            player: null,
+            rivals: [],
+            hurdles: [[], [], []],
+            particles: [],
+            clouds: [
+                { x: 40, y: 18, w: 54 },
+                { x: 210, y: 28, w: 72 },
+                { x: 420, y: 14, w: 62 },
+                { x: 640, y: 24, w: 48 }
+            ],
+            isChargingAngle: false,
+            chargeAngle: 12,
+            chargeDir: 1,
+            lockedAngle: null,
+            takeoffX: 0,
+            landingX: null,
+            fieldResult: 0,
+            isFoul: false,
+            targetBarHeight: 2.15,
+            barCleared: true,
+            fieldTimeLeft: FIELD_SHOT_CLOCK_MAX,
+            javelin: { x: 0, y: 1.5, vx: 0, vy: 0, angle: 0, inAir: false, landed: false }
+        };
+        loadSavedRecords();
+
+        function renderHighJumpButtons() {
+            const container = document.getElementById('barHeightButtons');
+            container.innerHTML = HIGH_JUMP_HEIGHTS.map(h => {
+                const active = Math.abs(GameState.targetBarHeight - h) < 0.01;
+                return `<button onclick="setTargetBarHeight(${h})" class="px-2.5 py-1 rounded-lg font-extrabold text-xs transition-all ${active ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300'}">${h.toFixed(2)}m</button>`;
+            }).join('');
+        }
+
+        function setTargetBarHeight(h) {
+            GameState.targetBarHeight = h;
+            renderHighJumpButtons();
+            updateHUD();
+        }
+
+        class Athlete {
+            constructor(config) {
+                this.name = config.name;
+                this.isPlayer = config.isPlayer || false;
+                this.lane = config.lane;
+                this.shirtColor = config.shirtColor;
+                this.shortsColor = config.shortsColor;
+                this.skinColor = config.skinColor;
+                this.headbandColor = config.headbandColor;
+                this.aiBaseSpeed = config.aiBaseSpeed || 0;
+                this.aiJumpAccuracy = config.aiJumpAccuracy || 0.92;
+                this.reset();
+            }
+
+            reset() {
+                this.x = 0; this.vx = 0; this.y = 0; this.vy = 0;
+                this.isJumping = false; this.animPhase = 0; this.stumbleTimer = 0;
+                this.finishTime = null; this.celebrating = false; this.floatingFeedback = null;
+            }
+
+            setFeedback(text, color) { this.floatingFeedback = { text, color, ttl: 1.0, yOffset: 0 }; }
+
+            boostRun() {
+                if (GameState.phase !== 'ACTIVE' || this.finishTime !== null) return;
+                const maxSpeed = GameState.mode === '110m' ? 11.7 : 12.6;
+                const factor = Math.max(0.24, 1 - (this.vx / maxSpeed));
+                const penalty = this.stumbleTimer > 0 ? 0.45 : 1.0;
+                this.vx = Math.min(maxSpeed, this.vx + (1.22 * factor * penalty));
+                SoundFX.step();
+                if (this.y === 0) spawnDust(this.x, this.lane, 2);
+            }
+
+            hurdleJump() {
+                if (GameState.phase !== 'ACTIVE' || this.finishTime !== null) return;
+                if (!this.isJumping && this.y === 0) {
+                    this.isJumping = true; this.vy = 5.45;
+                    if (this.isPlayer) SoundFX.jump();
+                    spawnDust(this.x, this.lane, 4);
+                }
+            }
+
+            update(dt) {
+                if (this.floatingFeedback) {
+                    this.floatingFeedback.ttl -= dt;
+                    this.floatingFeedback.yOffset += dt * 24;
+                    if (this.floatingFeedback.ttl <= 0) this.floatingFeedback = null;
+                }
+                if (GameState.mode === '100m' || GameState.mode === '110m') {
+                    this.updateRaceMode(dt);
+                } else {
+                    this.updateFieldMode(dt);
+                }
+            }
+
+            updateRaceMode(dt) {
+                if (GameState.phase !== 'ACTIVE') return;
+                if (this.finishTime !== null) {
+                    this.vx = Math.max(0, this.vx - 5.5 * dt);
+                    this.x += this.vx * dt;
+                    this.animPhase += this.vx * dt * 2.2;
+                    return;
+                }
+                if (this.stumbleTimer > 0) this.stumbleTimer = Math.max(0, this.stumbleTimer - dt);
+
+                if (!this.isPlayer) {
+                    const targetSpeed = this.aiBaseSpeed + Math.sin(GameState.elapsedTime * 3 + this.lane) * 0.45;
+                    if (this.vx < targetSpeed) this.vx += 7.5 * dt;
+
+                    if (GameState.mode === '110m' && !this.isJumping) {
+                        const myHurdles = GameState.hurdles[this.lane];
+                        for (let h of myHurdles) {
+                            const dist = h.x - this.x;
+                            if (!h.passed && dist > 0.7 && dist < 1.95) {
+                                if (Math.random() < this.aiJumpAccuracy) this.hurdleJump();
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                const drag = this.isJumping ? 1.4 : 3.35;
+                this.vx = Math.max(0, this.vx - drag * dt);
+
+                if (this.isJumping) {
+                    this.y += this.vy * dt; this.vy -= 14.2 * dt;
+                    if (this.y <= 0) { this.y = 0; this.vy = 0; this.isJumping = false; spawnDust(this.x, this.lane, 4); }
+                }
+
+                this.x += this.vx * dt;
+                this.animPhase += (this.isJumping ? 4 : this.vx * 2.6) * dt;
+
+                if (GameState.mode === '110m') {
+                    const laneHurdles = GameState.hurdles[this.lane];
+                    for (let h of laneHurdles) {
+                        if (!h.passed && Math.abs(this.x - h.x) < 0.48) {
+                            if (this.y < 0.75) {
+                                h.knocked = true; h.passed = true;
+                                this.vx *= 0.44; this.stumbleTimer = 0.45;
+                                if (this.isPlayer) { SoundFX.foul(); this.setFeedback('¡TROPIEZO!', '#ef4444'); }
+                            } else {
+                                h.passed = true;
+                                if (this.isPlayer) this.setFeedback('¡LIMPIO!', '#34d399');
+                            }
+                        } else if (!h.passed && this.x > h.x + 0.5) {
+                            h.passed = true;
+                        }
+                    }
+                }
+
+                if (this.x >= GameState.raceDistance) {
+                    this.finishTime = GameState.elapsedTime;
+                    this.celebrating = true;
+                    if (this.isPlayer) { SoundFX.fanfare(); finishRaceEvent(); }
+                }
+            }
+
+            updateFieldMode(dt) {
+                if (GameState.phase === 'ACTIVE') {
+                    this.vx = Math.max(0, this.vx - 3.0 * dt);
+                    this.x += this.vx * dt;
+                    this.animPhase += this.vx * dt * 2.6;
+                    const limitX = GameState.mode === 'highjump' ? HIGH_JUMP_BAR_X + 0.35 : FOUL_LINE_X + 0.25;
+                    if (this.x > limitX) triggerFieldFoul('¡NULO! LÍNEA PISADA');
+                } else if (GameState.phase === 'FLIGHT') {
+                    if (GameState.mode === 'longjump') {
+                        const prevX = this.x;
+                        const prevY = this.y;
+                        this.x += this.vx * dt;
+                        this.y += this.vy * dt;
+                        this.vy -= 9.8 * dt;
+                        this.animPhase += dt * 3.2;
+
+                        if (this.y <= 0 && this.vy < 0) {
+                            const frac = prevY > 0 ? (prevY / (prevY - this.y)) : 1;
+                            const exactTouchdownX = prevX + (this.x - prevX) * Math.min(1, Math.max(0, frac));
+                            this.x = exactTouchdownX;
+                            this.y = 0;
+                            this.vx = 0;
+                            this.vy = 0;
+                            this.isJumping = false;
+                            GameState.landingX = exactTouchdownX;
+                            spawnSandSplash(this.x, 16);
+
+                            const measureOriginX = Math.min(FOUL_LINE_X, GameState.takeoffX + 0.8);
+                            GameState.fieldResult = Math.max(0, exactTouchdownX - measureOriginX);
+                            this.celebrating = true;
+                            SoundFX.fanfare();
+                            this.setFeedback(`${GameState.fieldResult.toFixed(2)}m!`, '#fbbf24');
+                            finishFieldEvent();
+                        }
+                    } else if (GameState.mode === 'javelin') {
+                        this.vx = Math.max(0, this.vx - 16 * dt);
+                        this.x = Math.min(FOUL_LINE_X - 0.15, this.x + this.vx * dt);
+                        if (this.vx > 0.1) this.animPhase += this.vx * dt * 2.0;
+                    } else if (GameState.mode === 'highjump') {
+                        const prevX = this.x;
+                        this.x += this.vx * dt;
+                        this.y += this.vy * dt;
+                        this.vy -= 9.8 * dt;
+
+                        if (prevX < HIGH_JUMP_BAR_X && this.x >= HIGH_JUMP_BAR_X) {
+                            const t = (HIGH_JUMP_BAR_X - prevX) / Math.max(0.0001, this.x - prevX);
+                            const yAtBar = (this.y - this.vy * dt) + (this.vy * dt) * t;
+                            const clearanceHeight = yAtBar + 0.44;
+                            if (clearanceHeight < GameState.targetBarHeight) {
+                                GameState.barCleared = false;
+                                SoundFX.foul();
+                                this.setFeedback('¡DERRIBO DE LISTÓN!', '#ef4444');
+                            } else {
+                                GameState.barCleared = true;
+                                this.setFeedback('¡LISTÓN SUPERADO!', '#34d399');
+                            }
+                        }
+                        const matHeight = this.x >= HIGH_JUMP_BAR_X - 0.4 ? 0.45 : 0;
+                        if (this.vy < 0 && this.y <= matHeight) {
+                            this.y = matHeight;
+                            this.vy = 0;
+                            this.vx = 0;
+                            this.isJumping = false;
+                            if (GameState.barCleared && !GameState.isFoul) {
+                                GameState.fieldResult = GameState.targetBarHeight;
+                                this.celebrating = true;
+                                SoundFX.fanfare();
+                            } else {
+                                GameState.isFoul = true;
+                                GameState.fieldResult = 0;
+                            }
+                            finishFieldEvent();
+                        }
+                    }
+                } else if (GameState.phase === 'FINISHED') {
+                    this.vx = 0;
+                    this.vy = 0;
+                }
+            }
+        }
+
+        function startChargingAngle() {
+            if (GameState.phase !== 'ACTIVE') return;
+            const p = GameState.player;
+            if (!p) return;
+            const targetLine = GameState.mode === 'highjump' ? HIGH_JUMP_BAR_X : FOUL_LINE_X;
+            if (p.x < 10) { p.setFeedback('¡ACÉRCATE MÁS A LA LÍNEA!', '#fbbf24'); return; }
+            if (p.x > targetLine + 0.25) { triggerFieldFoul('¡NULO! PASASTE LÍNEA'); return; }
+
+            GameState.isChargingAngle = true;
+            GameState.chargeAngle = 12; GameState.chargeDir = 1; GameState.lockedAngle = null;
+        }
+
+        function releaseFieldAction() {
+            if (!GameState.isChargingAngle || GameState.phase !== 'ACTIVE') return;
+            GameState.isChargingAngle = false;
+            const angleDeg = Math.round(GameState.chargeAngle);
+            GameState.lockedAngle = angleDeg;
+
+            const p = GameState.player;
+            const rad = (angleDeg * Math.PI) / 180;
+            const speedRatio = Math.min(1.08, Math.max(0.28, p.vx / 11.4));
+
+            if (GameState.mode === 'longjump') {
+                if (p.x > FOUL_LINE_X + 0.2) { triggerFieldFoul('¡SALTO NULO!'); return; }
+                GameState.takeoffX = p.x;
+                GameState.landingX = null;
+                GameState.phase = 'FLIGHT';
+                p.isJumping = true;
+                p.y = 0.02;
+                SoundFX.jump();
+                spawnDust(p.x, 1, 8);
+                const boardBonus = Math.max(0.78, 1 - Math.max(0, FOUL_LINE_X - p.x) * 0.032);
+                const angleEfficiency = Math.max(0.65, 1 - Math.abs(angleDeg - 42) * 0.008);
+                const v0 = 9.65 * Math.pow(speedRatio, 0.70) * boardBonus * angleEfficiency;
+                p.vx = v0 * Math.cos(rad);
+                p.vy = v0 * Math.sin(rad);
+                p.setFeedback(`${angleDeg}°`, Math.abs(angleDeg - 42) <= 7 ? '#34d399' : '#fbbf24');
+            } else if (GameState.mode === 'javelin') {
+                if (p.x > FOUL_LINE_X + 0.2) { triggerFieldFoul('¡LANZAMIENTO NULO!'); return; }
+                GameState.takeoffX = p.x;
+                GameState.phase = 'FLIGHT';
+                SoundFX.throwJavelin();
+                spawnDust(p.x, 1, 6);
+                const angleBonus = Math.max(0.75, 1 - Math.abs(angleDeg - 40) * 0.006);
+                const v0 = 31.2 * Math.pow(speedRatio, 0.76) * angleBonus;
+                GameState.javelin.x = p.x + 0.45;
+                GameState.javelin.y = 1.65;
+                GameState.javelin.vx = v0 * Math.cos(rad);
+                GameState.javelin.vy = v0 * Math.sin(rad);
+                GameState.javelin.angle = rad;
+                GameState.javelin.inAir = true;
+                GameState.javelin.landed = false;
+                p.setFeedback(`¡${angleDeg}°!`, Math.abs(angleDeg - 40) <= 7 ? '#34d399' : '#fbbf24');
+            } else if (GameState.mode === 'highjump') {
+                const distToBar = HIGH_JUMP_BAR_X - p.x;
+                if (distToBar < 0.25 || distToBar > 6.5) { triggerFieldFoul(distToBar < 0.25 ? '¡DEMASIADO CERCA!' : '¡DEMASIADO LEJOS!'); return; }
+                GameState.takeoffX = p.x;
+                GameState.phase = 'FLIGHT';
+                p.isJumping = true;
+                p.y = 0.02;
+                SoundFX.jump();
+                spawnDust(p.x, 1, 6);
+                const angleFactor = Math.max(0.55, 1 - Math.abs(angleDeg - 60) / 72);
+                const maxApex = (1.38 + speedRatio * 1.32) * angleFactor;
+                p.vy = Math.sqrt(2 * 9.8 * Math.max(0.85, maxApex - 0.32));
+                const timeToPeak = p.vy / 9.8;
+                p.vx = Math.max(2.6, (distToBar + 0.35) / Math.max(0.35, timeToPeak));
+                p.setFeedback(`${angleDeg}°`, Math.abs(angleDeg - 60) <= 8 ? '#34d399' : '#fbbf24');
+            }
+        }
+
+        function triggerFieldFoul(reason) {
+            GameState.isChargingAngle = false; GameState.isFoul = true; GameState.fieldResult = 0; GameState.phase = 'FINISHED';
+            SoundFX.foul();
+            if (GameState.player) GameState.player.setFeedback(reason, '#ef4444');
+            setTimeout(() => showFieldResultsModal(reason), 700);
+        }
+
+        function spawnDust(meterX, lane, count) {
+            for (let i = 0; i < count; i++) {
+                GameState.particles.push({ x: meterX - 0.1, lane, vx: -0.4 - Math.random() * 1.6, vy: 0.4 + Math.random() * 1.4, y: 0, size: 2.5 + Math.random() * 3, color: '254, 215, 170', alpha: 0.85 });
+            }
+        }
+
+        function spawnSandSplash(meterX, count) {
+            for (let i = 0; i < count; i++) {
+                GameState.particles.push({ x: meterX + (Math.random() - 0.5) * 0.4, lane: 1, vx: (Math.random() - 0.3) * 3.2, vy: 1.2 + Math.random() * 2.8, y: 0, size: 3 + Math.random() * 3.5, color: '251, 191, 36', alpha: 0.95 });
+            }
+        }
+
+        function initCompetitors() {
+            const isHurdles = GameState.mode === '110m';
+            const isRace = GameState.mode === '100m' || GameState.mode === '110m';
+
+            GameState.rivals = isRace ? [
+                new Athlete({ name: 'ATLETA 1', isPlayer: false, lane: 0, shirtColor: '#facc15', shortsColor: '#1e3a8a', skinColor: '#8d5524', headbandColor: '#ef4444', aiBaseSpeed: isHurdles ? 8.3 : 9.4, aiJumpAccuracy: 0.92 }),
+                new Athlete({ name: 'ATLETA 2', isPlayer: false, lane: 2, shirtColor: '#22c55e', shortsColor: '#0f172a', skinColor: '#f1c27d', headbandColor: '#ffffff', aiBaseSpeed: isHurdles ? 8.0 : 9.05, aiJumpAccuracy: 0.86 })
+            ] : [];
+
+            GameState.player = new Athlete({ name: getEffectivePlayerNick(), isPlayer: true, lane: 1, shirtColor: '#ef4444', shortsColor: '#ffffff', skinColor: '#e0ac69', headbandColor: '#fbbf24' });
+
+            GameState.hurdles = [[], [], []];
+            if (isHurdles) {
+                for (let lane = 0; lane < 3; lane++) GameState.hurdles[lane] = HURDLE_POSITIONS_110M.map(pos => ({ x: pos, knocked: false, knockAngle: 0, passed: false }));
+            }
+
+            GameState.isChargingAngle = false; GameState.chargeAngle = 12; GameState.lockedAngle = null;
+            GameState.takeoffX = 0; GameState.landingX = null;
+            GameState.fieldResult = 0; GameState.isFoul = false; GameState.barCleared = true;
+            GameState.fieldTimeLeft = FIELD_SHOT_CLOCK_MAX;
+            GameState.javelin = { x: 0, y: 1.5, vx: 0, vy: 0, angle: 0, inAir: false, landed: false };
+        }
+
+        function selectEvent(mode, fromTournamentOrNetwork = false) {
+            if (TournamentState.active && !TournamentState.completed && OnlineManager.connected && !fromTournamentOrNetwork) {
+                const lockedMode = TournamentState.eventsQueue[TournamentState.currentIndex];
+                if (lockedMode && mode !== lockedMode && !OnlineManager.isHost) {
+                    mode = lockedMode;
+                }
+            }
+
+            GameState.mode = mode;
+            GameState.raceDistance = mode === '100m' ? 100 : (mode === '110m' ? 110 : FOUL_LINE_X);
+            GameState.phase = 'MENU'; GameState.elapsedTime = 0; GameState.cameraX = 0;
+
+            ['100m', '110m', 'longjump', 'javelin', 'highjump'].forEach(m => {
+                const tab = document.getElementById('tab-' + m);
+                if (tab) tab.className = (m === mode) ? 'event-tab tab-active py-1.5 px-1 rounded-lg font-extrabold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 min-w-0' : 'event-tab tab-inactive py-1.5 px-1 rounded-lg font-extrabold text-[10px] sm:text-xs flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1.5 min-w-0';
+            });
+
+            const cfg = EVENT_CONFIGS[mode];
+            document.getElementById('runBtnLabel').textContent = cfg.runLabel;
+            document.getElementById('runBtnSubtext').textContent = cfg.runSub;
+            document.getElementById('actionBtnIcon').textContent = cfg.actionIcon;
+            document.getElementById('actionBtnLabel').textContent = cfg.actionLabel;
+            document.getElementById('actionBtnSubtext').textContent = cfg.actionSub;
+            document.getElementById('hudPrimaryLabel').textContent = cfg.primaryHud;
+            document.getElementById('hudSecondaryLabel').textContent = cfg.secondaryHud;
+
+            initCompetitors();
+            updateHUD();
+            showStartModal();
+            refreshOnlineUI();
+        }
+
+        function showStartModal() {
+            const cfg = EVENT_CONFIGS[GameState.mode];
+            const modal = document.getElementById('overlayModal');
+            document.getElementById('modalBadge').textContent = cfg.title;
+            const titleEl = document.getElementById('modalTitle');
+            titleEl.textContent = cfg.headline; titleEl.className = 'retro-font text-[11px] sm:text-sm text-white mb-0.5 break-words';
+            document.getElementById('modalDesc').innerHTML = cfg.desc;
+            document.getElementById('resultsBox').classList.add('hidden');
+            document.getElementById('btnWhatsAppShare').classList.add('hidden');
+            document.getElementById('btnNextTournamentEvent').classList.add('hidden');
+            document.getElementById('arcadeNameBox').classList.remove('hidden');
+            document.getElementById('btnStartText').textContent = 'EMPEZAR PRUEBA';
+
+            const hjSel = document.getElementById('highJumpSelector');
+            if (GameState.mode === 'highjump') { hjSel.classList.remove('hidden'); renderHighJumpButtons(); }
+            else { hjSel.classList.add('hidden'); }
+
+            const syncBtn = document.getElementById('btnOnlineSyncStart');
+            if (syncBtn) {
+                if (OnlineManager.connected) syncBtn.classList.remove('hidden');
+                else syncBtn.classList.add('hidden');
+            }
+
+            updateTournamentTopBar();
+            modal.classList.remove('hidden');
+        }
+
+        function startEventAction(fromNetwork = false) {
+            if (OnlineManager.connected && !fromNetwork) {
+                hostTriggerOnlineStart();
+                return;
+            }
+
+            SoundFX.init();
+            const rawInput = (document.getElementById('playerNickInput').value || '').trim().toUpperCase();
+            syncNickInputs(rawInput);
+
+            OnlineManager.isReady = false;
+            Object.values(OnlineManager.remotePlayers).forEach(r => { r.isReady = false; });
+
+            document.getElementById('overlayModal').classList.add('hidden');
+            closeOnlineModal();
+            initCompetitors();
+            GameState.player.name = getEffectivePlayerNick();
+            GameState.elapsedTime = 0; GameState.cameraX = 0;
+            GameState.fieldTimeLeft = FIELD_SHOT_CLOCK_MAX;
+
+            GameState.phase = 'COUNTDOWN';
+            GameState.countdownText = '3';
+            SoundFX.beep(440, 0.16, 'square', 0.12);
+
+            setTimeout(() => {
+                if (GameState.phase === 'COUNTDOWN') {
+                    GameState.countdownText = '2';
+                    SoundFX.beep(523.25, 0.16, 'square', 0.12);
+                }
+            }, 800);
+
+            setTimeout(() => {
+                if (GameState.phase === 'COUNTDOWN') {
+                    GameState.countdownText = '1';
+                    SoundFX.beep(659.25, 0.18, 'square', 0.13);
+                }
+            }, 1600);
+
+            setTimeout(() => {
+                if (GameState.phase === 'COUNTDOWN') {
+                    GameState.phase = 'ACTIVE';
+                    GameState.countdownText = '¡YA!';
+                    SoundFX.pistolShot();
+                    setTimeout(() => {
+                        if (GameState.countdownText === '¡YA!') GameState.countdownText = '';
+                    }, 650);
+                }
+            }, 2400);
+        }
+
+        function finishRaceEvent() {
+            [GameState.player, ...GameState.rivals].forEach(a => {
+                if (a.finishTime === null) {
+                    const rem = Math.max(0, GameState.raceDistance - a.x);
+                    a.finishTime = GameState.elapsedTime + (rem / Math.max(7.8, a.vx || a.aiBaseSpeed));
+                }
+            });
+            setTimeout(() => { GameState.phase = 'FINISHED'; showRaceResultsModal(); }, 600);
+        }
+
+        function updateNextTournamentButtonUI() {
+            const nextBtn = document.getElementById('btnNextTournamentEvent');
+            const nextTxt = document.getElementById('btnNextTourText');
+            if (!nextBtn || !nextTxt) return;
+
+            if (!TournamentState.active) {
+                nextBtn.classList.add('hidden');
+                return;
+            }
+
+            nextBtn.classList.remove('hidden');
+            const isLast = TournamentState.currentIndex + 1 >= TournamentState.eventsQueue.length;
+            if (isLast) {
+                nextTxt.textContent = `👑 VER CAMPEÓN FINAL (${TournamentState.winnerNick || 'PODIO'})`;
+            } else {
+                const nextMode = TournamentState.eventsQueue[TournamentState.currentIndex + 1];
+                const nextTitle = EVENT_CONFIGS[nextMode]?.title || 'Siguiente';
+                nextTxt.textContent = `SIGUIENTE (${TournamentState.currentIndex + 2}/${TournamentState.eventsQueue.length}): ${nextTitle.toUpperCase()}`;
+            }
+        }
+
+        function showRaceResultsModal() {
+            const modal = document.getElementById('overlayModal');
+            const title = document.getElementById('modalTitle');
+            const desc = document.getElementById('modalDesc');
+            const resultsBox = document.getElementById('resultsBox');
+            const resultsList = document.getElementById('resultsList');
+
+            const remoteCompetitors = Object.values(OnlineManager.remotePlayers)
+                .filter(r => r.mode === GameState.mode)
+                .map(r => ({
+                    name: `🌐 ${r.nick}`,
+                    rawNick: r.nick,
+                    isPlayer: false,
+                    finishTime: typeof r.finishTime === 'number' ? r.finishTime : (GameState.elapsedTime + Math.max(0.2, (GameState.raceDistance - (r.x || 0)) / 8.5))
+                }));
+
+            const myName = getEffectivePlayerNick();
+            const localEntry = {
+                name: myName,
+                rawNick: myName,
+                isPlayer: true,
+                finishTime: GameState.player.finishTime
+            };
+
+            const pool = remoteCompetitors.length > 0
+                ? [localEntry, ...remoteCompetitors]
+                : [localEntry, ...GameState.rivals.map(rv => ({ name: rv.name, rawNick: rv.name, isPlayer: false, finishTime: rv.finishTime }))];
+
+            const sorted = pool.sort((a, b) => a.finishTime - b.finishTime);
+            sorted.forEach(item => { item.displayMark = item.finishTime.toFixed(2) + 's'; });
+
+            awardTournamentPointsForEvent(sorted);
+
+            const playerRank = sorted.findIndex(a => a.isPlayer) + 1;
+            const playerTime = GameState.player.finishTime;
+
+            let isNewRecord = false;
+            if (playerTime < GameState.records[GameState.mode]) {
+                GameState.records[GameState.mode] = playerTime; isNewRecord = true; saveRecordsToLocal();
+            }
+
+            if (TournamentState.active && TournamentState.completed) {
+                title.textContent = `🏆 ¡GANADOR: ${TournamentState.winnerNick}!`;
+                title.className = 'retro-font text-[11px] sm:text-sm text-amber-400 mb-0.5 break-words';
+                desc.textContent = `Campeonato finalizado con ${TournamentState.winnerPoints} puntos totales.`;
+            } else {
+                title.textContent = playerRank === 1 ? (isNewRecord ? '¡ORO Y RÉCORD!' : '¡1º PUESTO (+10 PTS)!') : (playerRank === 2 ? '¡2º PUESTO (+6 PTS)!' : '¡3º PUESTO (+4 PTS)!');
+                title.className = 'retro-font text-[11px] sm:text-sm text-amber-400 mb-0.5 break-words';
+                desc.textContent = isNewRecord ? `¡Nuevo récord con ${playerTime.toFixed(2)}s!` : `Marca de ${playerTime.toFixed(2)}s en pista.`;
+            }
+
+            const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+            resultsList.innerHTML = sorted.map((ath, idx) => {
+                const ptsBadge = TournamentState.active ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold text-[10px]">+${POSITION_POINTS[idx] || 1} pts</span>` : '';
+                return `
+                    <div class="flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg ${ath.isPlayer ? 'bg-amber-500/20 border border-amber-400/50 font-bold text-white' : 'bg-slate-900 text-slate-300'}">
+                        <span class="truncate">${medals[idx] || '🏃'} ${ath.name}</span>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            ${ptsBadge}
+                            <span class="retro-font text-[10px] sm:text-xs ${ath.isPlayer ? 'text-amber-300' : 'text-slate-400'}">${ath.finishTime.toFixed(2)}s</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            resultsBox.classList.remove('hidden');
+            document.getElementById('arcadeNameBox').classList.add('hidden');
+            document.getElementById('btnWhatsAppShare').classList.remove('hidden');
+            document.getElementById('btnStartText').textContent = 'REPETIR PRUEBA';
+            updateNextTournamentButtonUI();
+            refreshOnlineUI();
+            modal.classList.remove('hidden');
+            updateHUD();
+        }
+
+        function finishFieldEvent() {
+            GameState.phase = 'FINISHED';
+            if (GameState.player) {
+                GameState.player.vx = 0;
+                GameState.player.vy = 0;
+            }
+            setTimeout(() => {
+                if (GameState.phase === 'FINISHED') showFieldResultsModal();
+            }, 650);
+        }
+
+        function showFieldResultsModal(foulReason) {
+            const modal = document.getElementById('overlayModal');
+            const title = document.getElementById('modalTitle');
+            const desc = document.getElementById('modalDesc');
+            const resultsBox = document.getElementById('resultsBox');
+            const resultsList = document.getElementById('resultsList');
+
+            const mark = GameState.fieldResult;
+            let isNewRecord = false;
+            if (!GameState.isFoul && mark > GameState.records[GameState.mode]) {
+                GameState.records[GameState.mode] = mark; isNewRecord = true; saveRecordsToLocal();
+            }
+
+            const remoteParticipants = Object.values(OnlineManager.remotePlayers)
+                .filter(r => r.mode === GameState.mode)
+                .map(r => ({
+                    name: `👻 ${r.nick}`,
+                    rawNick: r.nick,
+                    isPlayer: false,
+                    scoreVal: r.isFoul ? -1 : (r.fieldResult || 0),
+                    isFoul: !!r.isFoul,
+                    displayMark: r.isFoul ? 'NULO' : ((r.fieldResult || 0) > 0 ? (r.fieldResult || 0).toFixed(2) + 'm' : '0.00m')
+                }));
+
+            const aiFieldPool = [];
+            if (TournamentState.active && remoteParticipants.length === 0) {
+                const baseRef = GameState.mode === 'longjump' ? 7.65 : (GameState.mode === 'javelin' ? 76.0 : 2.15);
+                const m1 = Number((baseRef * (0.94 + Math.random() * 0.1)).toFixed(2));
+                const m2 = Number((baseRef * (0.89 + Math.random() * 0.1)).toFixed(2));
+                aiFieldPool.push({ name: 'ATLETA 1', rawNick: 'ATLETA 1', isPlayer: false, scoreVal: m1, isFoul: false, displayMark: m1.toFixed(2) + 'm' });
+                aiFieldPool.push({ name: 'ATLETA 2', rawNick: 'ATLETA 2', isPlayer: false, scoreVal: m2, isFoul: false, displayMark: m2.toFixed(2) + 'm' });
+            }
+
+            const myName = getEffectivePlayerNick();
+            const localFieldEntry = {
+                name: myName,
+                rawNick: myName,
+                isPlayer: true,
+                scoreVal: GameState.isFoul ? -1 : mark,
+                isFoul: GameState.isFoul,
+                displayMark: GameState.isFoul ? 'NULO' : mark.toFixed(2) + 'm'
+            };
+
+            const fieldPool = [localFieldEntry, ...remoteParticipants, ...aiFieldPool].sort((a, b) => b.scoreVal - a.scoreVal);
+            awardTournamentPointsForEvent(fieldPool);
+
+            if (TournamentState.active && TournamentState.completed) {
+                title.textContent = `🏆 ¡GANADOR: ${TournamentState.winnerNick}!`;
+                title.className = 'retro-font text-[11px] sm:text-sm text-amber-400 mb-0.5 break-words';
+                desc.textContent = `Campeonato completado con ${TournamentState.winnerPoints} puntos totales.`;
+            } else if (GameState.isFoul) {
+                title.textContent = foulReason || '¡INTENTO NULO!'; title.className = 'retro-font text-[11px] sm:text-sm text-red-400 mb-0.5 break-words';
+                desc.textContent = 'Recuerda soltar el botón antes de la línea y dentro de los 15 segundos.';
+            } else {
+                title.textContent = isNewRecord ? '¡NUEVO RÉCORD!' : '¡MARCA VÁLIDA!'; title.className = 'retro-font text-[11px] sm:text-sm text-amber-400 mb-0.5 break-words';
+                desc.textContent = `Has conseguido ${mark.toFixed(2)} metros.`;
+            }
+
+            const medals = ['🥇', '🥈', '🥉', '4️⃣', '5️⃣'];
+            resultsList.innerHTML = fieldPool.map((p, idx) => {
+                const ptsVal = p.isFoul ? 0 : (POSITION_POINTS[idx] || 1);
+                const ptsBadge = TournamentState.active ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-extrabold text-[10px]">+${ptsVal} pts</span>` : '';
+                return `
+                    <div class="flex items-center justify-between gap-2 px-2.5 py-1 rounded-lg ${p.isPlayer ? 'bg-amber-500/20 border border-amber-400/50 font-bold text-white' : 'bg-slate-900 text-slate-300'}">
+                        <span class="truncate">${medals[idx] || '📏'} ${p.name}</span>
+                        <div class="flex items-center gap-1.5 shrink-0">
+                            ${ptsBadge}
+                            <span class="retro-font text-[10px] sm:text-xs ${p.isFoul ? 'text-red-400' : (p.isPlayer ? 'text-amber-300' : 'text-emerald-300')}">${p.displayMark}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            if (GameState.mode === 'highjump') {
+                document.getElementById('highJumpSelector').classList.remove('hidden');
+                renderHighJumpButtons();
+            }
+
+            resultsBox.classList.remove('hidden');
+            document.getElementById('arcadeNameBox').classList.add('hidden');
+            document.getElementById('btnWhatsAppShare').classList.remove('hidden');
+            document.getElementById('btnStartText').textContent = 'NUEVO INTENTO';
+            updateNextTournamentButtonUI();
+            refreshOnlineUI();
+            modal.classList.remove('hidden');
+            updateHUD();
+        }
+
+        const btnRun = document.getElementById('btnRun');
+        const btnAction = document.getElementById('btnAction');
+
+        function handleRunTap(e) {
+            if (e && e.cancelable) e.preventDefault();
+            SoundFX.init();
+            btnRun.classList.add('pressed');
+            setTimeout(() => btnRun.classList.remove('pressed'), 60);
+            if (GameState.phase === 'ACTIVE' && GameState.player) GameState.player.boostRun();
+        }
+
+        function handleActionPress(e) {
+            if (e && e.cancelable) e.preventDefault();
+            SoundFX.init();
+            btnAction.classList.add('pressed');
+            if (GameState.phase !== 'ACTIVE' || !GameState.player) return;
+            if (GameState.mode === '100m' || GameState.mode === '110m') GameState.player.hurdleJump();
+            else startChargingAngle();
+        }
+
+        function handleActionRelease(e) {
+            if (e && e.cancelable) e.preventDefault();
+            btnAction.classList.remove('pressed');
+            if (GameState.isChargingAngle) releaseFieldAction();
+        }
+
+        btnRun.addEventListener('pointerdown', handleRunTap);
+        btnAction.addEventListener('pointerdown', handleActionPress);
+        btnAction.addEventListener('pointerup', handleActionRelease);
+        btnAction.addEventListener('pointercancel', handleActionRelease);
+        window.addEventListener('pointerup', () => { btnAction.classList.remove('pressed'); if (GameState.isChargingAngle) releaseFieldAction(); });
+
+        function isTypingInInput(e) {
+            const active = document.activeElement;
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.isContentEditable)) return true;
+            if (e && e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable)) return true;
+            const onlineModalOpen = !document.getElementById('onlineModal').classList.contains('hidden');
+            if (onlineModalOpen) return true;
+            return false;
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (isTypingInInput(e)) return;
+            if (e.repeat) return;
+            const c = e.code;
+            if (c === 'Space' || c === 'KeyZ' || c === 'KeyX' || c === 'ArrowRight' || c === 'KeyD') { e.preventDefault(); handleRunTap(); }
+            else if (c === 'ArrowUp' || c === 'KeyW' || c === 'ShiftLeft') { e.preventDefault(); handleActionPress(); }
+            else if (c === 'Enter' && (GameState.phase === 'MENU' || GameState.phase === 'FINISHED')) startEventAction();
+        });
+        window.addEventListener('keyup', (e) => {
+            if (isTypingInInput(e)) return;
+            if (['ArrowUp', 'KeyW', 'ShiftLeft'].includes(e.code)) { e.preventDefault(); handleActionRelease(); }
+        });
+
+        function resizeCanvas() {
+            const wrapper = document.getElementById('canvasWrapper');
+            const rect = wrapper.getBoundingClientRect();
+            canvas.width = Math.max(300, rect.width);
+            canvas.height = Math.max(180, rect.height);
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function updateHUD() {
+            const p = GameState.player;
+            const cfg = EVENT_CONFIGS[GameState.mode];
+            if (GameState.mode === '100m' || GameState.mode === '110m') {
+                document.getElementById('hudPrimaryVal').textContent = GameState.elapsedTime.toFixed(2).padStart(5, '0') + 's';
+                document.getElementById('hudSecondaryVal').textContent = `${p ? Math.min(GameState.raceDistance, Math.floor(p.x)) : 0} / ${GameState.raceDistance}m`;
+            } else if (GameState.mode === 'longjump') {
+                const liveJump = (GameState.phase === 'FLIGHT' && p) ? Math.max(0, p.x - Math.min(FOUL_LINE_X, GameState.takeoffX + 0.8)) : GameState.fieldResult;
+                document.getElementById('hudPrimaryVal').textContent = liveJump.toFixed(2) + 'm';
+                document.getElementById('hudSecondaryVal').textContent = GameState.phase === 'ACTIVE' ? `⏱️ ${GameState.fieldTimeLeft.toFixed(1)}s` : (p ? Math.max(0, FOUL_LINE_X - p.x) : FOUL_LINE_X).toFixed(1) + 'm';
+            } else if (GameState.mode === 'javelin') {
+                const liveThrow = (GameState.javelin.inAir || GameState.javelin.landed) ? Math.max(0, GameState.javelin.x - FOUL_LINE_X) : GameState.fieldResult;
+                document.getElementById('hudPrimaryVal').textContent = liveThrow.toFixed(2) + 'm';
+                document.getElementById('hudSecondaryVal').textContent = GameState.phase === 'ACTIVE' ? `⏱️ ${GameState.fieldTimeLeft.toFixed(1)}s` : (p ? Math.max(0, FOUL_LINE_X - p.x) : FOUL_LINE_X).toFixed(1) + 'm';
+            } else if (GameState.mode === 'highjump') {
+                document.getElementById('hudPrimaryVal').textContent = GameState.targetBarHeight.toFixed(2) + 'm';
+                document.getElementById('hudSecondaryVal').textContent = GameState.phase === 'ACTIVE' ? `⏱️ ${GameState.fieldTimeLeft.toFixed(1)}s` : (p ? Math.max(0, HIGH_JUMP_BAR_X - p.x) : HIGH_JUMP_BAR_X).toFixed(1) + 'm';
+            }
+
+            const kmh = p ? (p.vx * 3.6) : 0;
+            document.getElementById('hudSpeedText').textContent = `${kmh.toFixed(1)} km/h`;
+            document.getElementById('hudSpeedBar').style.width = `${Math.min(100, (kmh / 44) * 100)}%`;
+            document.getElementById('hudRecord').textContent = GameState.records[GameState.mode].toFixed(2) + cfg.unit;
+        }
+
+        function shadeColor(hex, percent) {
+            const num = parseInt(hex.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+            const G = Math.min(255, Math.max(0, ((num >> 8) & 0x00FF) + amt));
+            const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        function drawAngleGauge(ctx, screenX, baseY) {
+            const radius = 56, cx = screenX + 18, cy = baseY - 28;
+            ctx.save();
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.78)';
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, radius, -Math.PI / 2, 0); ctx.closePath(); ctx.fill();
+
+            const optDeg = GameState.mode === 'highjump' ? 60 : (GameState.mode === 'javelin' ? 40 : 42);
+            const minOpt = ((optDeg - 8) * Math.PI) / 180, maxOpt = ((optDeg + 8) * Math.PI) / 180;
+            ctx.fillStyle = 'rgba(52, 211, 153, 0.45)';
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, radius, -maxOpt, -minOpt); ctx.closePath(); ctx.fill();
+
+            ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(cx, cy, radius, -Math.PI / 2, 0); ctx.stroke();
+
+            const curRad = (GameState.chargeAngle * Math.PI) / 180;
+            ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3.5;
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(-curRad) * radius, cy + Math.sin(-curRad) * radius); ctx.stroke();
+
+            ctx.font = 'bold 11px "Press Start 2P", monospace'; ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
+            ctx.fillText(`${Math.round(GameState.chargeAngle)}°`, cx + 8, cy - radius - 6);
+            ctx.restore();
+        }
+
+        function drawAthlete(ctx, athlete, screenX, laneCenterY, pxPerMeter) {
+            const jumpOffsetPx = athlete.y * pxPerMeter * 1.15;
+            const footY = laneCenterY - jumpOffsetPx;
+
+            ctx.save();
+            const shadowScale = Math.max(0.35, 1 - (athlete.y / 2.6));
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+            ctx.beginPath(); ctx.ellipse(screenX, laneCenterY + 2, 13 * shadowScale, 4.5 * shadowScale, 0, 0, Math.PI * 2); ctx.fill();
+
+            const bounce = athlete.isJumping ? 0 : Math.abs(Math.sin(athlete.animPhase * 2)) * 3.2;
+            const hipX = screenX, hipY = footY - 21 - bounce;
+            const isHighJumpFlight = (GameState.mode === 'highjump' && athlete.isJumping);
+            const leanAngle = athlete.celebrating ? -0.1 : (isHighJumpFlight ? -0.55 : (athlete.isJumping ? 0.30 : Math.min(0.26, athlete.vx * 0.022)));
+            const shoulderX = hipX + Math.sin(leanAngle) * 17, shoulderY = hipY - Math.cos(leanAngle) * 17;
+
+            let leg1Angle, leg2Angle, knee1Bend, knee2Bend, arm1Angle, arm2Angle;
+            if (athlete.celebrating) {
+                leg1Angle = 0.25; leg2Angle = -0.25; knee1Bend = 0.1; knee2Bend = 0.1; arm1Angle = -2.5; arm2Angle = -2.2;
+            } else if (athlete.isJumping) {
+                leg1Angle = 1.02; knee1Bend = -0.25; leg2Angle = -0.82; knee2Bend = -1.2; arm1Angle = 0.9; arm2Angle = -0.8;
+            } else {
+                const s = Math.sin(athlete.animPhase), c = Math.cos(athlete.animPhase);
+                leg1Angle = s * 0.95; leg2Angle = -s * 0.95;
+                knee1Bend = c > 0 ? -c * 1.15 : -0.2; knee2Bend = -c > 0 ? c * 1.15 : -0.2;
+                arm1Angle = -s * 0.95; arm2Angle = s * 0.95;
+            }
+
+            const carryingJavelin = (GameState.mode === 'javelin' && athlete.isPlayer && !GameState.javelin.inAir && !GameState.javelin.landed);
+            if (carryingJavelin) arm1Angle = -1.25;
+
+            function drawLeg(thighAngle, kneeBend, isBack) {
+                const kneeX = hipX + Math.sin(thighAngle) * 10.5, kneeY = hipY + Math.cos(thighAngle) * 10.5;
+                const ankleX = kneeX + Math.sin(thighAngle + kneeBend) * 10.5, ankleY = kneeY + Math.cos(thighAngle + kneeBend) * 10.5;
+                ctx.lineCap = 'round'; ctx.lineWidth = 4.8; ctx.strokeStyle = isBack ? shadeColor(athlete.skinColor, -18) : athlete.skinColor;
+                ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(kneeX, kneeY); ctx.lineTo(ankleX, ankleY); ctx.stroke();
+                ctx.fillStyle = isBack ? '#cbd5e1' : '#ffffff'; ctx.fillRect(ankleX - 2, ankleY - 2, 7.5, 4.5);
+            }
+
+            function drawArm(shoulderAngle, isBack) {
+                const elbowX = shoulderX + Math.sin(shoulderAngle) * 8.5, elbowY = shoulderY + Math.cos(shoulderAngle) * 8.5;
+                const foreAngle = (athlete.celebrating || (!isBack && carryingJavelin)) ? shoulderAngle : shoulderAngle + 1.1;
+                const handX = elbowX + Math.sin(foreAngle) * 8.5, handY = elbowY + Math.cos(foreAngle) * 8.5;
+                ctx.lineCap = 'round'; ctx.lineWidth = 4; ctx.strokeStyle = isBack ? shadeColor(athlete.skinColor, -18) : athlete.skinColor;
+                ctx.beginPath(); ctx.moveTo(shoulderX, shoulderY); ctx.lineTo(elbowX, elbowY); ctx.lineTo(handX, handY); ctx.stroke();
+
+                if (!isBack && carryingJavelin) {
+                    const javAngle = GameState.isChargingAngle ? -(GameState.chargeAngle * Math.PI) / 180 : -0.18;
+                    ctx.save(); ctx.translate(handX, handY); ctx.rotate(javAngle);
+                    ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(-26, 0); ctx.lineTo(32, 0); ctx.stroke();
+                    ctx.strokeStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(24, 0); ctx.lineTo(35, 0); ctx.stroke();
+                    ctx.restore();
+                }
+            }
+
+            drawArm(arm2Angle, true); drawLeg(leg2Angle, knee2Bend, true);
+            ctx.fillStyle = athlete.shortsColor; ctx.beginPath(); ctx.arc(hipX, hipY, 5.8, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = athlete.shirtColor; ctx.lineWidth = 9.5; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(hipX, hipY); ctx.lineTo(shoulderX, shoulderY); ctx.stroke();
+
+            const headX = shoulderX + Math.sin(leanAngle) * 7.5, headY = shoulderY - 8.5;
+            ctx.fillStyle = athlete.skinColor; ctx.beginPath(); ctx.arc(headX, headY, 6, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = athlete.headbandColor; ctx.fillRect(headX - 6, headY - 3.8, 12, 2.8);
+
+            drawLeg(leg1Angle, false); drawArm(arm1Angle, false);
+
+            if (athlete.isPlayer) {
+                ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(headX, headY - 10); ctx.lineTo(headX - 4.5, headY - 16); ctx.lineTo(headX + 4.5, headY - 16); ctx.closePath(); ctx.fill();
+            } else if (athlete.isGhost || athlete.isOnlineRival) {
+                ctx.font = 'bold 8px "Press Start 2P", monospace';
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#0f172a';
+                ctx.fillText(athlete.name, headX + 1, headY - 13);
+                ctx.fillStyle = athlete.isGhost ? '#38bdf8' : '#a5b4fc';
+                ctx.fillText(athlete.name, headX, headY - 14);
+            }
+
+            if (athlete.isPlayer && GameState.isChargingAngle) drawAngleGauge(ctx, screenX, footY);
+
+            if (athlete.floatingFeedback) {
+                ctx.font = 'bold 10px "Press Start 2P", monospace'; ctx.textAlign = 'center';
+                ctx.fillStyle = '#000000'; ctx.fillText(athlete.floatingFeedback.text, screenX + 1, headY - 20 - athlete.floatingFeedback.yOffset + 1);
+                ctx.fillStyle = athlete.floatingFeedback.color; ctx.fillText(athlete.floatingFeedback.text, screenX, headY - 20 - athlete.floatingFeedback.yOffset);
+            }
+            ctx.restore();
+        }
+
+        function renderScene() {
+            const W = canvas.width, H = canvas.height;
+            const pxPerMeter = Math.max(32, W / 18);
+            const playerScreenOffset = W * 0.24;
+
+            if (GameState.mode === 'javelin' && (GameState.javelin.inAir || GameState.javelin.landed)) {
+                GameState.cameraX = GameState.javelin.x - 4;
+            } else if (GameState.player) {
+                GameState.cameraX = GameState.player.x;
+            }
+
+            const skyGrad = ctx.createLinearGradient(0, 0, 0, H * 0.42);
+            skyGrad.addColorStop(0, '#0284c7'); skyGrad.addColorStop(1, '#38bdf8');
+            ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, W, H * 0.42);
+
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+            GameState.clouds.forEach(c => {
+                const cx = ((c.x - GameState.cameraX * 5) % (W + 120) + (W + 120)) % (W + 120) - 60;
+                ctx.beginPath(); ctx.roundRect(cx, c.y, c.w, 14, 7); ctx.fill();
+            });
+
+            const standsTop = H * 0.18, standsHeight = H * 0.25;
+            ctx.fillStyle = '#1e293b'; ctx.fillRect(0, standsTop, W, standsHeight);
+
+            const crowdBounce = (GameState.phase === 'ACTIVE' || GameState.phase === 'FLIGHT') ? Math.floor(GameState.elapsedTime * 10) % 2 : 0;
+            const crowdColors = ['#f87171', '#fbbf24', '#60a5fa', '#34d399', '#f472b6', '#ffffff'];
+            const camShift = Math.floor(GameState.cameraX * pxPerMeter * 0.35);
+
+            for (let row = 0; row < 3; row++) {
+                const ry = standsTop + 8 + row * 15;
+                for (let sx = -16; sx < W + 16; sx += 16) {
+                    const worldIdx = Math.floor((sx + camShift) / 16) + row * 31;
+                    ctx.fillStyle = crowdColors[Math.abs(worldIdx) % crowdColors.length];
+                    ctx.fillRect(sx - (camShift % 16), ry + ((Math.abs(worldIdx) % 2 === crowdBounce) ? -2 : 0), 8, 8);
+                }
+            }
+
+            const fanTexts = ['RATIO ZERO', 'DEWANKERS'];
+            const bannerSpacingPx = 190;
+            const firstWorldSlot = Math.floor((camShift - 180) / bannerSpacingPx);
+            const lastWorldSlot = Math.floor((camShift + W + 180) / bannerSpacingPx);
+
+            for (let slot = firstWorldSlot; slot <= lastWorldSlot; slot++) {
+                const screenBx = slot * bannerSpacingPx - camShift;
+                const isRatio = Math.abs(slot) % 2 === 0;
+                const label = isRatio ? fanTexts[0] : fanTexts[1];
+                const waveY = Math.sin(GameState.elapsedTime * 7 + slot * 1.7) * 3.5;
+                const tilt = Math.sin(GameState.elapsedTime * 5 + slot) * 0.04;
+                const by = standsTop + 12 + (Math.abs(slot) % 2) * 8 + waveY;
+                const bw = isRatio ? 104 : 98;
+                const bh = 20;
+
+                ctx.save();
+                ctx.translate(screenBx, by);
+                ctx.rotate(tilt);
+
+                ctx.strokeStyle = '#cbd5e1';
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.moveTo(-bw / 2 + 10, bh);
+                ctx.lineTo(-bw / 2 + 10, bh + 12);
+                ctx.moveTo(bw / 2 - 10, bh);
+                ctx.lineTo(bw / 2 - 10, bh + 12);
+                ctx.stroke();
+
+                ctx.fillStyle = '#fbbf24';
+                ctx.fillRect(-bw / 2 + 8, bh + 5, 5, 5);
+                ctx.fillRect(bw / 2 - 12, bh + 5, 5, 5);
+
+                ctx.fillStyle = isRatio ? '#fef08a' : '#ef4444';
+                ctx.strokeStyle = '#0f172a';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(-bw / 2, 0, bw, bh, 4);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.font = 'bold 8px "Press Start 2P", monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = isRatio ? '#0f172a' : '#ffffff';
+                ctx.fillText(label, 0, bh / 2 + 1);
+
+                ctx.restore();
+            }
+
+            const wallY = standsTop + standsHeight - 16;
+            ctx.fillStyle = '#1d4ed8'; ctx.fillRect(0, wallY, W, 16);
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 8px "Press Start 2P", monospace'; ctx.textAlign = 'center';
+            const bannerLabel = EVENT_CONFIGS[GameState.mode].title.toUpperCase();
+            for (let m = 0; m <= 160; m += 16) {
+                const bx = playerScreenOffset + (m - GameState.cameraX) * pxPerMeter;
+                if (bx > -120 && bx < W + 120) ctx.fillText(bannerLabel, bx, wallY + 11);
+            }
+
+            const grassY = standsTop + standsHeight, grassH = H * 0.08;
+            ctx.fillStyle = '#16a34a'; ctx.fillRect(0, grassY, W, grassH);
+
+            const trackTop = grassY + grassH, trackHeight = H - trackTop, laneHeight = trackHeight / 3;
+            const laneColors = ['#b83b27', '#d14d36', '#b83b27'];
+            for (let l = 0; l < 3; l++) {
+                ctx.fillStyle = laneColors[l]; ctx.fillRect(0, trackTop + l * laneHeight, W, laneHeight);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.85)'; ctx.fillRect(0, trackTop + l * laneHeight, W, 2.5);
+            }
+
+            if (GameState.mode === 'javelin') {
+                const sectorStartX = playerScreenOffset + (FOUL_LINE_X - GameState.cameraX) * pxPerMeter;
+                if (sectorStartX < W) {
+                    ctx.fillStyle = '#15803d'; ctx.fillRect(Math.max(0, sectorStartX), trackTop, W - Math.max(0, sectorStartX), trackHeight);
+                    for (let dist = 10; dist <= 110; dist += 10) {
+                        const arcX = playerScreenOffset + (FOUL_LINE_X + dist - GameState.cameraX) * pxPerMeter;
+                        if (arcX > 0 && arcX < W) {
+                            ctx.strokeStyle = 'rgba(255,255,255,0.65)'; ctx.lineWidth = 2;
+                            ctx.beginPath(); ctx.moveTo(arcX, trackTop); ctx.lineTo(arcX, H); ctx.stroke();
+                            ctx.fillStyle = '#fef08a'; ctx.font = 'bold 9px "Press Start 2P", monospace'; ctx.fillText(`${dist}m`, arcX, trackTop + 16);
+                        }
+                    }
+                }
+            }
+
+            if (GameState.mode === 'longjump') {
+                const boardX = playerScreenOffset + (FOUL_LINE_X - GameState.cameraX) * pxPerMeter;
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(boardX - 6, trackTop + laneHeight, 6, laneHeight);
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(boardX, trackTop + laneHeight, 4, laneHeight);
+                const pitStartX = playerScreenOffset + (FOUL_LINE_X + 0.3 - GameState.cameraX) * pxPerMeter;
+                const pitY = trackTop + laneHeight * 0.65;
+                const pitH = laneHeight * 1.7;
+                ctx.fillStyle = '#d97706'; ctx.fillRect(pitStartX - 3, pitY - 3, 13 * pxPerMeter + 6, pitH + 6);
+                ctx.fillStyle = '#fcd34d'; ctx.fillRect(pitStartX, pitY, 13 * pxPerMeter, pitH);
+
+                for (let d = 2; d <= 10; d += 2) {
+                    const markX = playerScreenOffset + (FOUL_LINE_X + d - GameState.cameraX) * pxPerMeter;
+                    if (markX > -20 && markX < W + 20) {
+                        ctx.strokeStyle = 'rgba(180, 83, 9, 0.45)';
+                        ctx.lineWidth = 1.5;
+                        ctx.beginPath(); ctx.moveTo(markX, pitY); ctx.lineTo(markX, pitY + pitH); ctx.stroke();
+                        ctx.fillStyle = '#92400e';
+                        ctx.font = 'bold 8px "Press Start 2P", monospace';
+                        ctx.fillText(`${d}m`, markX, pitY + 12);
+                    }
+                }
+
+                if (GameState.landingX !== null) {
+                    const landScreenX = playerScreenOffset + (GameState.landingX - GameState.cameraX) * pxPerMeter;
+                    ctx.fillStyle = 'rgba(180, 83, 9, 0.7)';
+                    ctx.beginPath();
+                    ctx.ellipse(landScreenX, trackTop + 1.72 * laneHeight + 2, 14, 6, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(landScreenX, pitY);
+                    ctx.lineTo(landScreenX, pitY + pitH);
+                    ctx.stroke();
+                }
+            }
+
+            if (GameState.mode === 'javelin') {
+                const foulX = playerScreenOffset + (FOUL_LINE_X - GameState.cameraX) * pxPerMeter;
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(foulX - 5, trackTop, 5, trackHeight);
+                ctx.fillStyle = '#ef4444'; ctx.fillRect(foulX, trackTop, 4, trackHeight);
+            }
+
+            ctx.textAlign = 'center'; ctx.font = 'bold 9px "Press Start 2P", monospace';
+            const maxMarkers = (GameState.mode === '100m' || GameState.mode === '110m') ? GameState.raceDistance : 40;
+            for (let m = 0; m <= maxMarkers; m += 10) {
+                const mx = playerScreenOffset + (m - GameState.cameraX) * pxPerMeter;
+                if (mx > -40 && mx < W + 40) {
+                    ctx.fillStyle = '#0f172a'; ctx.fillRect(mx - 20, grassY + 3, 40, 13);
+                    ctx.fillStyle = '#fbbf24'; ctx.fillText(`${m}m`, mx, grassY + 13);
+                }
+            }
+
+            if (GameState.mode === '100m' || GameState.mode === '110m') {
+                const finishX = playerScreenOffset + (GameState.raceDistance - GameState.cameraX) * pxPerMeter;
+                if (finishX > -40 && finishX < W + 40) {
+                    for (let y = trackTop; y < H; y += 7) {
+                        const rowIdx = Math.floor((y - trackTop) / 7);
+                        ctx.fillStyle = rowIdx % 2 === 0 ? '#ffffff' : '#0f172a'; ctx.fillRect(finishX - 4, y, 7, 7);
+                        ctx.fillStyle = rowIdx % 2 === 0 ? '#0f172a' : '#ffffff'; ctx.fillRect(finishX + 3, y, 7, 7);
+                    }
+                }
+            }
+
+            const centerLaneY = trackTop + 1.72 * laneHeight;
+            if (GameState.mode === 'highjump') {
+                const barScreenX = playerScreenOffset + (HIGH_JUMP_BAR_X - GameState.cameraX) * pxPerMeter;
+                if (barScreenX > -150 && barScreenX < W + 150) {
+                    ctx.fillStyle = '#1d4ed8'; ctx.beginPath(); ctx.roundRect(barScreenX - 6, centerLaneY - 32, 4.2 * pxPerMeter, 38, 8); ctx.fill();
+                    const barHeightPx = GameState.targetBarHeight * pxPerMeter * 1.15;
+                    ctx.fillStyle = '#cbd5e1'; ctx.fillRect(barScreenX - 4, centerLaneY - barHeightPx - 18, 5, barHeightPx + 18);
+                    ctx.fillStyle = GameState.barCleared ? '#fbbf24' : '#ef4444';
+                    ctx.fillRect(barScreenX - 16, centerLaneY - barHeightPx, 32, 5);
+                }
+            }
+
+            const remoteInSameMode = Object.values(OnlineManager.remotePlayers).filter(r => r.mode === GameState.mode);
+            const isRaceMode = GameState.mode === '100m' || GameState.mode === '110m';
+
+            const allAthletes = [GameState.rivals[0], GameState.player, GameState.rivals[1]];
+            if (isRaceMode && remoteInSameMode.length > 0) {
+                if (remoteInSameMode[0]) {
+                    allAthletes[0] = {
+                        ...remoteInSameMode[0],
+                        name: remoteInSameMode[0].nick,
+                        isPlayer: false,
+                        isOnlineRival: true,
+                        shirtColor: '#6366f1',
+                        shortsColor: '#0f172a',
+                        skinColor: '#f1c27d',
+                        headbandColor: '#38bdf8'
+                    };
+                }
+                if (remoteInSameMode[1]) {
+                    allAthletes[2] = {
+                        ...remoteInSameMode[1],
+                        name: remoteInSameMode[1].nick,
+                        isPlayer: false,
+                        isOnlineRival: true,
+                        shirtColor: '#10b981',
+                        shortsColor: '#0f172a',
+                        skinColor: '#e0ac69',
+                        headbandColor: '#fbbf24'
+                    };
+                }
+            }
+
+            for (let lane = 0; lane < 3; lane++) {
+                const laneCenterY = trackTop + (lane + 0.72) * laneHeight;
+                if (GameState.mode === '110m' && GameState.hurdles[lane]) {
+                    GameState.hurdles[lane].forEach(h => {
+                        const hx = playerScreenOffset + (h.x - GameState.cameraX) * pxPerMeter;
+                        if (hx > -40 && hx < W + 40) {
+                            ctx.save(); ctx.translate(hx, laneCenterY);
+                            if (h.knocked) { h.knockAngle = Math.min(Math.PI / 2.2, h.knockAngle + 0.18); ctx.rotate(h.knockAngle); }
+                            ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 3.5;
+                            ctx.beginPath(); ctx.moveTo(-7, 0); ctx.lineTo(4, 0); ctx.moveTo(0, 0); ctx.lineTo(0, -26); ctx.stroke();
+                            ctx.fillStyle = '#ffffff'; ctx.fillRect(-5, -30, 10, 6);
+                            ctx.fillStyle = '#ef4444'; ctx.fillRect(-5, -30, 5, 6);
+                            ctx.restore();
+                        }
+                    });
+                }
+
+                GameState.particles.forEach(pt => {
+                    if (pt.lane === lane) {
+                        ctx.fillStyle = `rgba(${pt.color}, ${pt.alpha})`;
+                        ctx.beginPath(); ctx.arc(playerScreenOffset + (pt.x - GameState.cameraX) * pxPerMeter, laneCenterY - pt.y * 12, pt.size, 0, Math.PI * 2); ctx.fill();
+                    }
+                });
+
+                if (!isRaceMode && lane === 1 && remoteInSameMode.length > 0) {
+                    remoteInSameMode.forEach(rem => {
+                        ctx.save();
+                        ctx.globalAlpha = 0.48;
+                        const ghostAthlete = {
+                            name: rem.nick,
+                            isPlayer: false,
+                            isGhost: true,
+                            x: rem.x || 0,
+                            y: rem.y || 0,
+                            vx: rem.vx || 0,
+                            animPhase: rem.animPhase || 0,
+                            isJumping: !!rem.isJumping,
+                            celebrating: !!rem.celebrating,
+                            shirtColor: '#38bdf8',
+                            shortsColor: '#0284c7',
+                            skinColor: '#bae6fd',
+                            headbandColor: '#ffffff'
+                        };
+                        drawAthlete(ctx, ghostAthlete, playerScreenOffset + (ghostAthlete.x - GameState.cameraX) * pxPerMeter, laneCenterY - 4, pxPerMeter);
+
+                        if (GameState.mode === 'javelin' && (rem.javInAir || rem.javLanded)) {
+                            const rjx = playerScreenOffset + ((rem.javX || 0) - GameState.cameraX) * pxPerMeter;
+                            const rjy = centerLaneY - (rem.javY || 0) * pxPerMeter * 1.15;
+                            ctx.save();
+                            ctx.translate(rjx, rjy);
+                            ctx.rotate(-(rem.javAngle || 0));
+                            ctx.strokeStyle = '#38bdf8';
+                            ctx.lineWidth = 2.5;
+                            ctx.beginPath(); ctx.moveTo(-28, 0); ctx.lineTo(28, 0); ctx.stroke();
+                            ctx.restore();
+                        }
+                        ctx.restore();
+                    });
+                }
+
+                const ath = allAthletes[lane];
+                if (ath) drawAthlete(ctx, ath, playerScreenOffset + (ath.x - GameState.cameraX) * pxPerMeter, laneCenterY, pxPerMeter);
+            }
+
+            if (GameState.mode === 'javelin' && (GameState.javelin.inAir || GameState.javelin.landed)) {
+                const jx = playerScreenOffset + (GameState.javelin.x - GameState.cameraX) * pxPerMeter;
+                const jy = centerLaneY - GameState.javelin.y * pxPerMeter * 1.15;
+                ctx.save(); ctx.translate(jx, jy); ctx.rotate(-GameState.javelin.angle);
+                ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(-30, 0); ctx.lineTo(30, 0); ctx.stroke();
+                ctx.strokeStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(22, 0); ctx.lineTo(34, 0); ctx.stroke();
+                ctx.restore();
+            }
+
+            if (GameState.countdownText) {
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.82)'; ctx.beginPath(); ctx.roundRect(W / 2 - 145, H / 2 - 28, 290, 56, 12); ctx.fill();
+                ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.5; ctx.stroke();
+                ctx.font = 'bold 16px "Press Start 2P", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillStyle = ['¡YA!', '¡CORRE!'].includes(GameState.countdownText) ? '#34d399' : '#fbbf24';
+                ctx.fillText(GameState.countdownText, W / 2, H / 2);
+            }
+
+            const isFieldEvent = GameState.mode !== '100m' && GameState.mode !== '110m';
+            if (isFieldEvent && GameState.phase === 'ACTIVE') {
+                const urgent = GameState.fieldTimeLeft <= 5.0;
+                ctx.save();
+                ctx.fillStyle = urgent ? 'rgba(127, 29, 29, 0.88)' : 'rgba(15, 23, 42, 0.82)';
+                ctx.strokeStyle = urgent ? '#ef4444' : '#38bdf8';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.roundRect(W - 138, 10, 128, 28, 8);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.font = 'bold 9px "Press Start 2P", monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = urgent ? '#fca5a5' : '#e0f2fe';
+                ctx.fillText(`TIEMPO ${GameState.fieldTimeLeft.toFixed(1)}s`, W - 74, 25);
+                ctx.restore();
+            }
+        }
+
+        let lastFrameTime = performance.now();
+        function gameLoop(now) {
+            const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+            lastFrameTime = now;
+
+            if (['ACTIVE', 'FLIGHT'].includes(GameState.phase)) GameState.elapsedTime += dt;
+
+            const isFieldMode = GameState.mode !== '100m' && GameState.mode !== '110m';
+            if (isFieldMode && GameState.phase === 'ACTIVE') {
+                GameState.fieldTimeLeft = Math.max(0, GameState.fieldTimeLeft - dt);
+                if (GameState.fieldTimeLeft <= 0) {
+                    triggerFieldFoul('¡TIEMPO AGOTADO (15s)!');
+                }
+            }
+
+            if (GameState.isChargingAngle) {
+                GameState.chargeAngle += GameState.chargeDir * 95 * dt;
+                if (GameState.chargeAngle >= 82) { GameState.chargeAngle = 82; GameState.chargeDir = -1; }
+                else if (GameState.chargeAngle <= 10) { GameState.chargeAngle = 10; GameState.chargeDir = 1; }
+            }
+
+            if (GameState.mode === 'javelin' && GameState.javelin.inAir) {
+                const jav = GameState.javelin;
+                const prevX = jav.x;
+                const prevY = jav.y;
+                jav.x += jav.vx * dt;
+                jav.y += jav.vy * dt;
+                jav.vy -= 9.8 * dt;
+                jav.angle = Math.atan2(jav.vy, jav.vx);
+                if (jav.y <= 0 && jav.vy < 0) {
+                    const frac = prevY > 0 ? (prevY / (prevY - jav.y)) : 1;
+                    jav.x = prevX + (jav.x - prevX) * Math.min(1, Math.max(0, frac));
+                    jav.y = 0;
+                    jav.vx = 0;
+                    jav.vy = 0;
+                    jav.inAir = false;
+                    jav.landed = true;
+                    spawnDust(jav.x, 1, 8);
+                    GameState.fieldResult = Math.max(0, jav.x - FOUL_LINE_X);
+                    SoundFX.fanfare();
+                    finishFieldEvent();
+                }
+            }
+
+            if (GameState.player) GameState.player.update(dt);
+            GameState.rivals.forEach(r => r.update(dt));
+
+            for (let i = GameState.particles.length - 1; i >= 0; i--) {
+                const p = GameState.particles[i];
+                p.x += p.vx * dt; p.y += p.vy * dt; p.alpha -= dt * 1.9;
+                if (p.alpha <= 0) GameState.particles.splice(i, 1);
+            }
+
+            if (['ACTIVE', 'FLIGHT'].includes(GameState.phase)) updateHUD();
+            renderScene();
+            requestAnimationFrame(gameLoop);
+        }
+
+        window.onload = () => {
+            resizeCanvas();
+            loadPersistentSession();
+            const initialMode = (TournamentState.active && TournamentState.eventsQueue[TournamentState.currentIndex])
+                ? TournamentState.eventsQueue[TournamentState.currentIndex]
+                : '100m';
+            selectEvent(initialMode);
+            updateTournamentTopBar();
+            requestAnimationFrame(gameLoop);
+        };
+    </script>
+</body>
+</html>
