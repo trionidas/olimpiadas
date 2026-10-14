@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Olimpiadas Triónicas - Retos y Torneo Online</title>
+    <title>Olimpiadas Triónicas - Multijugador Online y PWA</title>
     
     <meta name="theme-color" content="#020617">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -105,6 +105,11 @@
         .custom-scroll::-webkit-scrollbar-thumb {
             background: #334155;
             border-radius: 9999px;
+        }
+
+        input[type="text"] {
+            user-select: text;
+            -webkit-user-select: text;
         }
 
         canvas {
@@ -228,7 +233,7 @@
 
                         <div id="arcadeNameBox" class="mb-2.5 bg-slate-950 p-2 rounded-xl border border-slate-800 flex items-center justify-between gap-2">
                             <span class="text-[10px] text-amber-400 uppercase font-bold text-left leading-tight">Tu Nombre / Nick:</span>
-                            <input type="text" id="playerNickInput" maxlength="8" value="TRIONIC" onchange="syncNickInputs(this.value)" class="bg-slate-900 border border-amber-500/60 rounded-lg px-2.5 py-1 text-center retro-font text-xs text-white w-36 uppercase tracking-wider outline-none focus:border-amber-400">
+                            <input type="text" id="playerNickInput" maxlength="8" value="" placeholder="TU NOMBRE" onchange="syncNickInputs(this.value)" class="bg-slate-900 border border-amber-500/60 rounded-lg px-2.5 py-1 text-center retro-font text-xs text-white placeholder-slate-600 w-36 uppercase tracking-wider outline-none focus:border-amber-400">
                         </div>
 
                         <div id="highJumpSelector" class="hidden mb-2.5 bg-slate-950 p-2 rounded-xl border border-slate-800">
@@ -238,6 +243,18 @@
 
                         <div id="resultsBox" class="hidden bg-slate-950/90 rounded-xl p-2 mb-2.5 border border-slate-800 text-left space-y-1">
                             <div id="resultsList" class="space-y-1 text-[11px] sm:text-xs"></div>
+                        </div>
+
+                        <div id="onlineReadyOverlayBox" class="hidden bg-indigo-950/80 border border-indigo-500/60 rounded-xl p-2.5 mb-2.5 text-left space-y-1.5">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] font-black uppercase tracking-wider text-indigo-300">SALA ONLINE • PREPARADOS</span>
+                                <span id="overlayReadyCounter" class="px-2 py-0.5 rounded-full bg-slate-900 text-amber-400 font-extrabold text-[10px] border border-amber-500/40">0/0 LISTOS</span>
+                            </div>
+                            <div id="overlayReadyRoster" class="flex flex-wrap gap-1 text-[10px]"></div>
+                            <button id="btnToggleReadyOverlay" onclick="toggleMyReadyState()" class="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                                <span id="btnToggleReadyOverlayIcon">✋</span>
+                                <span id="btnToggleReadyOverlayText">PULSA PARA ESTAR LISTO</span>
+                            </button>
                         </div>
                     </div>
 
@@ -251,8 +268,8 @@
                         <button id="btnNextTournamentEvent" onclick="hostAdvanceTournament()" class="hidden w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1.5">
                             <span>⏭️</span> <span id="btnNextTourText" class="truncate">SIGUIENTE PRUEBA DEL TORNEO</span>
                         </button>
-                        <button id="btnOnlineSyncStart" onclick="hostTriggerOnlineStart()" class="hidden w-full py-2 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform flex items-center justify-center gap-1.5">
-                            <span>🚀</span> <span class="truncate">LANZAR PRUEBA PARA LA SALA</span>
+                        <button id="btnOnlineSyncStart" onclick="hostTriggerOnlineStart()" class="hidden w-full py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-[11px] sm:text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-45 disabled:pointer-events-none">
+                            <span>🚀</span> <span id="btnOnlineSyncStartText" class="truncate">LANZAR PRUEBA (ESPERANDO LISTOS)</span>
                         </button>
                         <button id="btnWhatsAppShare" onclick="shareChallengeOnWhatsApp()" class="hidden w-full py-2 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-600 text-white font-black text-[11px] uppercase tracking-wider shadow active:scale-95 transition-transform flex items-center justify-center gap-1.5">
                             <span>📲</span> <span class="truncate">RETAR POR WHATSAPP</span>
@@ -321,7 +338,7 @@
             <div class="grid grid-cols-2 gap-2 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
                 <div>
                     <label class="text-[10px] text-amber-400 uppercase font-bold block mb-1 truncate">1. Tu Nombre</label>
-                    <input id="onlineNickInput" type="text" maxlength="8" value="TRIONIC" onchange="syncNickInputs(this.value)" placeholder="TU NICK" class="w-full bg-slate-900 border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-xs font-black text-white uppercase outline-none focus:border-amber-400">
+                    <input id="onlineNickInput" type="text" maxlength="8" value="" onchange="syncNickInputs(this.value)" placeholder="TU NOMBRE" class="w-full bg-slate-900 border border-amber-500/50 rounded-lg px-2.5 py-1.5 text-xs font-black text-white placeholder-slate-600 uppercase outline-none focus:border-amber-400">
                 </div>
                 <div>
                     <label class="text-[10px] text-indigo-400 uppercase font-bold block mb-1 truncate">2. Código Sala</label>
@@ -356,12 +373,20 @@
                     <span class="text-slate-400 font-bold shrink-0">Estado Sala:</span>
                     <span id="onlineStatusLabel" class="font-extrabold text-slate-400 truncate">Desconectado</span>
                 </div>
+                <div class="flex items-center justify-between bg-slate-900 px-2.5 py-1.5 rounded-lg border border-slate-800">
+                    <span class="text-[10px] text-slate-300 font-bold uppercase">Jugadores Listos:</span>
+                    <span id="modalReadyCounterBadge" class="text-[11px] font-black text-amber-400">0/0 LISTOS</span>
+                </div>
                 <div>
-                    <span class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Atletas y Puntuación General:</span>
-                    <div id="onlinePlayersList" class="flex flex-col gap-1 text-[11px] text-slate-300 max-h-28 overflow-y-auto custom-scroll">
+                    <span class="text-[10px] text-slate-400 uppercase font-bold block mb-1">Atletas, Estado y Puntuación:</span>
+                    <div id="onlinePlayersList" class="flex flex-col gap-1 text-[11px] text-slate-300 max-h-32 overflow-y-auto custom-scroll">
                         <span class="text-slate-500 italic">Conéctate a una sala o inicia un torneo</span>
                     </div>
                 </div>
+                <button id="btnModalReadyToggle" onclick="toggleMyReadyState()" class="hidden w-full py-2 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                    <span id="btnModalReadyIcon">✋</span>
+                    <span id="btnModalReadyText">ESTOY LISTO / PREPARADO</span>
+                </button>
             </div>
 
             <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-1">
@@ -371,7 +396,7 @@
                 <button id="btnConnectOnline" onclick="joinOnlineRoom()" class="flex-1 py-2.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform">
                     🔗 Conectar a Sala Online
                 </button>
-                <button id="btnStartTournamentNow" onclick="hostStartNewTournament()" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-transform">
+                <button id="btnStartTournamentNow" onclick="hostStartNewTournament()" class="flex-1 py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg active:scale-95 transition-all disabled:opacity-45 disabled:pointer-events-none">
                     🏆 Iniciar Torneo
                 </button>
             </div>
@@ -392,7 +417,7 @@
             <div id="winnerBannerBox" class="hidden bg-gradient-to-b from-amber-500/25 via-amber-500/10 to-slate-950 border-2 border-amber-400 rounded-2xl p-3.5 shadow-xl">
                 <div class="text-3xl sm:text-4xl mb-1 animate-bounce">👑🏆🎉</div>
                 <div class="text-[10px] font-black uppercase tracking-widest text-amber-300 mb-0.5">¡CAMPEÓN ABSOLUTO!</div>
-                <div id="winnerNameDisplay" class="retro-font text-base sm:text-xl text-white tracking-wider my-1 break-words">GANADOR: TRIONIC</div>
+                <div id="winnerNameDisplay" class="retro-font text-base sm:text-xl text-white tracking-wider my-1 break-words">GANADOR: ATLETA</div>
                 <div id="winnerPointsDisplay" class="text-xs font-extrabold text-emerald-400">30 Puntos Olímpicos</div>
             </div>
 
@@ -539,6 +564,17 @@
             document.getElementById('soundIcon').textContent = SoundFX.muted ? '🔇' : '🔊';
         }
 
+        function getFallbackAthleteNick() {
+            if (!window._fallbackNick) {
+                window._fallbackNick = 'ATLETA' + Math.floor(10 + Math.random() * 89);
+            }
+            return window._fallbackNick;
+        }
+
+        function getEffectivePlayerNick() {
+            return OnlineManager.myNick || getFallbackAthleteNick();
+        }
+
         window.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const challenger = params.get('reto');
@@ -553,7 +589,8 @@
         });
 
         function shareChallengeOnWhatsApp() {
-            const nick = (document.getElementById('playerNickInput').value || 'TRIONIC').toUpperCase();
+            const rawInput = (document.getElementById('playerNickInput').value || '').trim().toUpperCase();
+            const nick = rawInput || getEffectivePlayerNick();
             const cfg = EVENT_CONFIGS[GameState.mode];
             const marcaVal = GameState.fieldResult > 0 ? GameState.fieldResult.toFixed(2) + cfg.unit : (GameState.player && GameState.player.finishTime ? GameState.player.finishTime.toFixed(2) + cfg.unit : '0.00');
             const currentUrl = window.location.href.split('?')[0];
@@ -645,7 +682,8 @@
             connected: false,
             roomCode: '',
             myId: '',
-            myNick: 'TRIONIC',
+            myNick: '',
+            isReady: false,
             hostConn: null,
             clientConns: [],
             remotePlayers: {},
@@ -653,14 +691,57 @@
         };
 
         function syncNickInputs(val) {
-            const clean = (val || 'TRIONIC').trim().toUpperCase().slice(0, 8) || 'TRIONIC';
+            const clean = (val || '').trim().toUpperCase().slice(0, 8);
             OnlineManager.myNick = clean;
             const pInput = document.getElementById('playerNickInput');
             const oInput = document.getElementById('onlineNickInput');
             if (pInput && pInput.value.toUpperCase() !== clean) pInput.value = clean;
             if (oInput && oInput.value.toUpperCase() !== clean) oInput.value = clean;
-            if (GameState.player) GameState.player.name = clean;
+            if (GameState.player) GameState.player.name = getEffectivePlayerNick();
             savePersistentSession();
+            if (OnlineManager.connected) {
+                sendImmediatePlayerUpdate();
+                refreshOnlineUI();
+            }
+        }
+
+        function toggleMyReadyState() {
+            SoundFX.init();
+            OnlineManager.isReady = !OnlineManager.isReady;
+            SoundFX.beep(OnlineManager.isReady ? 660 : 330, 0.1, 'square', 0.12);
+            sendImmediatePlayerUpdate();
+            refreshOnlineUI();
+        }
+
+        function getRoomReadyStats() {
+            if (!OnlineManager.connected) {
+                return { readyCount: 1, totalCount: 1, allReady: true, players: [] };
+            }
+            const remotes = Object.values(OnlineManager.remotePlayers);
+            const allPlayers = [
+                { id: OnlineManager.myId || 'local', nick: getEffectivePlayerNick(), isReady: !!OnlineManager.isReady, isLocal: true },
+                ...remotes.map(r => ({ id: r.id, nick: r.nick || 'ATLETA', isReady: !!r.isReady, isLocal: false }))
+            ];
+            const readyCount = allPlayers.filter(p => p.isReady).length;
+            const totalCount = allPlayers.length;
+            return {
+                readyCount,
+                totalCount,
+                allReady: totalCount > 0 && readyCount === totalCount,
+                players: allPlayers
+            };
+        }
+
+        function sendImmediatePlayerUpdate() {
+            if (!OnlineManager.connected) return;
+            if (OnlineManager.isHost) {
+                broadcastRoomRoster();
+            } else if (OnlineManager.hostConn && OnlineManager.hostConn.open) {
+                OnlineManager.hostConn.send({
+                    type: 'STATE_UPDATE',
+                    player: getLocalPlayerSnapshot()
+                });
+            }
         }
 
         function savePersistentSession() {
@@ -680,7 +761,7 @@
                 const raw = localStorage.getItem('trionic_session_v2');
                 if (!raw) return;
                 const data = JSON.parse(raw);
-                if (data.myNick) {
+                if (typeof data.myNick === 'string' && data.myNick !== 'TRIONIC') {
                     OnlineManager.myNick = data.myNick;
                     const pInput = document.getElementById('playerNickInput');
                     const oInput = document.getElementById('onlineNickInput');
@@ -694,20 +775,16 @@
                 }
                 if (data.tournament && typeof data.tournament === 'object') {
                     Object.assign(TournamentState, data.tournament);
-                    selectTournamentLength(TournamentState.totalGames || 3, true);
+                    if (!Array.isArray(TournamentState.eventsQueue) || TournamentState.eventsQueue.length === 0) {
+                        TournamentState.eventsQueue = [...(TOURNAMENT_PRESETS[TournamentState.totalGames] || TOURNAMENT_PRESETS[3])];
+                    }
+                    highlightTournamentButtonsUI(TournamentState.totalGames || 3);
                     updateTournamentTopBar();
                 }
             } catch (e) {}
         }
 
-        function selectTournamentLength(numGames, skipSave = false) {
-            TournamentState.totalGames = numGames;
-            if (numGames === 1) {
-                TournamentState.eventsQueue = [GameState.mode || '100m'];
-            } else {
-                TournamentState.eventsQueue = [...(TOURNAMENT_PRESETS[numGames] || TOURNAMENT_PRESETS[3])];
-            }
-
+        function highlightTournamentButtonsUI(numGames) {
             [1, 3, 5].forEach(n => {
                 const btn = document.getElementById('tourLenBtn-' + n);
                 if (!btn) return;
@@ -718,22 +795,54 @@
                 }
             });
 
+            const queueToPreview = (numGames === 1)
+                ? [GameState.mode || '100m']
+                : (TOURNAMENT_PRESETS[numGames] || TOURNAMENT_PRESETS[3]);
             const namesMap = { '100m': '⚡ 100m', '110m': '🚧 Vallas', 'longjump': '👟 Longitud', 'javelin': '🏹 Jabalina', 'highjump': '🏆 Altura' };
             const previewEl = document.getElementById('tourEventsPreview');
             if (previewEl) {
-                previewEl.textContent = 'Pruebas: ' + TournamentState.eventsQueue.map(e => namesMap[e]).join(' • ');
+                previewEl.textContent = 'Pruebas: ' + queueToPreview.map(e => namesMap[e]).join(' • ');
             }
+        }
+
+        function selectTournamentLength(numGames, skipSave = false) {
+            if (OnlineManager.connected && !OnlineManager.isHost && !skipSave) return;
+
+            TournamentState.totalGames = numGames;
+            if (!TournamentState.active) {
+                if (numGames === 1) {
+                    TournamentState.eventsQueue = [GameState.mode || '100m'];
+                } else {
+                    TournamentState.eventsQueue = [...(TOURNAMENT_PRESETS[numGames] || TOURNAMENT_PRESETS[3])];
+                }
+            }
+            highlightTournamentButtonsUI(numGames);
             if (!skipSave) savePersistentSession();
         }
 
         function hostStartNewTournament() {
-            const rawNick = (document.getElementById('onlineNickInput').value || document.getElementById('playerNickInput').value || 'TRIONIC').trim().toUpperCase();
+            if (OnlineManager.connected && !OnlineManager.isHost) {
+                toggleMyReadyState();
+                return;
+            }
+
+            if (OnlineManager.connected && OnlineManager.isHost) {
+                const stats = getRoomReadyStats();
+                if (!stats.allReady) {
+                    setOnlineStatus(`Esperando a que todos estén LISTOS (${stats.readyCount}/${stats.totalCount})`, 'text-amber-400');
+                    SoundFX.foul();
+                    return;
+                }
+            }
+
+            const rawNick = (document.getElementById('onlineNickInput').value || document.getElementById('playerNickInput').value || '').trim().toUpperCase();
             syncNickInputs(rawNick);
 
-            if (TournamentState.totalGames === 1) {
+            const chosenLen = Number(TournamentState.totalGames) || 3;
+            if (chosenLen === 1) {
                 TournamentState.eventsQueue = [GameState.mode || '100m'];
             } else {
-                TournamentState.eventsQueue = [...(TOURNAMENT_PRESETS[TournamentState.totalGames] || TOURNAMENT_PRESETS[3])];
+                TournamentState.eventsQueue = [...(TOURNAMENT_PRESETS[chosenLen] || TOURNAMENT_PRESETS[3])];
             }
 
             TournamentState.active = true;
@@ -744,8 +853,8 @@
             TournamentState.winnerPoints = 0;
             TournamentState.standings = {};
 
-            const myKey = OnlineManager.myNick;
-            TournamentState.standings[myKey] = { nick: OnlineManager.myNick, points: 0, wins: 0, lastMark: '-' };
+            const myKey = getEffectivePlayerNick();
+            TournamentState.standings[myKey] = { nick: myKey, points: 0, wins: 0, lastMark: '-' };
 
             const remotes = Object.values(OnlineManager.remotePlayers);
             if (remotes.length > 0) {
@@ -759,23 +868,25 @@
             }
 
             const firstEvent = TournamentState.eventsQueue[0];
-            selectEvent(firstEvent);
+            selectEvent(firstEvent, true);
             updateTournamentTopBar();
             savePersistentSession();
             closeOnlineModal();
 
             if (OnlineManager.connected && OnlineManager.isHost) {
                 broadcastTournamentState(true);
+                hostTriggerOnlineStart(true);
             }
         }
 
-        function broadcastTournamentState(forceStartEvent = false) {
+        function broadcastTournamentState(forceSwitchEvent = false) {
             if (!OnlineManager.connected || !OnlineManager.isHost) return;
+            const currentPlannedMode = TournamentState.eventsQueue[TournamentState.currentIndex] || GameState.mode;
             const packet = {
                 type: 'TOURNAMENT_SYNC',
                 tournament: TournamentState,
-                forceMode: TournamentState.eventsQueue[TournamentState.currentIndex] || GameState.mode,
-                forceStartEvent
+                forceMode: currentPlannedMode,
+                forceSwitchEvent
             };
             OnlineManager.clientConns.forEach(c => {
                 if (c.open) c.send(packet);
@@ -784,16 +895,22 @@
 
         function hostAdvanceTournament() {
             if (!TournamentState.active) return;
+            if (OnlineManager.connected && !OnlineManager.isHost) return;
 
             if (TournamentState.currentIndex + 1 < TournamentState.eventsQueue.length) {
                 TournamentState.currentIndex += 1;
                 const nextMode = TournamentState.eventsQueue[TournamentState.currentIndex];
-                selectEvent(nextMode);
+                OnlineManager.isReady = false;
+                Object.values(OnlineManager.remotePlayers).forEach(r => { r.isReady = false; });
+
+                selectEvent(nextMode, true);
                 updateTournamentTopBar();
                 savePersistentSession();
                 if (OnlineManager.connected && OnlineManager.isHost) {
-                    broadcastTournamentState(false);
+                    broadcastTournamentState(true);
+                    broadcastRoomRoster();
                 }
+                refreshOnlineUI();
             } else {
                 finalizeTournamentCeremony();
             }
@@ -920,8 +1037,9 @@
             if (sorted.length === 0) {
                 tbody.innerHTML = `<div class="text-xs text-slate-400 text-center py-3">Aún no hay puntuaciones registradas.</div>`;
             } else {
+                const myEffective = getEffectivePlayerNick();
                 tbody.innerHTML = sorted.map((st, idx) => {
-                    const isMe = st.nick === OnlineManager.myNick;
+                    const isMe = st.nick === myEffective;
                     return `
                         <div class="flex items-center justify-between px-3 py-2 rounded-xl border ${idx === 0 ? 'bg-amber-500/20 border-amber-400/60 text-white' : (isMe ? 'bg-indigo-950/60 border-indigo-500/50 text-indigo-100' : 'bg-slate-950 border-slate-800 text-slate-300')}">
                             <div class="flex items-center gap-2 min-w-0">
@@ -949,7 +1067,7 @@
             if (mainNick) {
                 document.getElementById('onlineNickInput').value = mainNick.toUpperCase();
             }
-            selectTournamentLength(TournamentState.totalGames || 3, true);
+            highlightTournamentButtonsUI(TournamentState.totalGames || 3);
             document.getElementById('onlineModal').classList.remove('hidden');
             refreshOnlineUI();
         }
@@ -960,11 +1078,25 @@
 
         function joinOnlineRoom() {
             const rawRoom = (document.getElementById('onlineRoomInput').value || 'PISTA1').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-            const rawNick = (document.getElementById('onlineNickInput').value || 'TRIONIC').trim().toUpperCase().slice(0, 8);
+            const rawNick = (document.getElementById('onlineNickInput').value || document.getElementById('playerNickInput').value || '').trim().toUpperCase().slice(0, 8);
             if (!rawRoom) return;
 
             syncNickInputs(rawNick);
+
+            if (OnlineManager.connected && OnlineManager.roomCode === rawRoom && OnlineManager.peer && !OnlineManager.peer.destroyed) {
+                setOnlineStatus(
+                    OnlineManager.isHost
+                        ? `Anfitrión activo en Sala ${rawRoom}`
+                        : `Conectado a Sala ${rawRoom}`,
+                    'text-emerald-400'
+                );
+                sendImmediatePlayerUpdate();
+                refreshOnlineUI();
+                return;
+            }
+
             OnlineManager.roomCode = rawRoom;
+            OnlineManager.isReady = false;
             savePersistentSession();
 
             disconnectOnlineRoom(true);
@@ -979,6 +1111,7 @@
                     OnlineManager.isHost = true;
                     OnlineManager.connected = true;
                     OnlineManager.myId = id;
+                    OnlineManager.isReady = true;
                     setOnlineStatus(`Anfitrión en Sala ${rawRoom}`, 'text-emerald-400');
                     startSyncLoop();
                     refreshOnlineUI();
@@ -1007,11 +1140,12 @@
 
             clientPeer.on('open', (myId) => {
                 OnlineManager.myId = myId;
-                const conn = clientPeer.connect(hostPeerId, { reliable: false });
+                const conn = clientPeer.connect(hostPeerId, { reliable: true });
                 OnlineManager.hostConn = conn;
 
                 conn.on('open', () => {
                     OnlineManager.connected = true;
+                    OnlineManager.isReady = false;
                     setOnlineStatus(`Conectado a Sala ${roomCode}`, 'text-emerald-400');
                     conn.send({
                         type: 'HELLO',
@@ -1037,7 +1171,13 @@
         }
 
         function setupHostClientConnection(conn) {
+            OnlineManager.clientConns = OnlineManager.clientConns.filter(c => c.peer !== conn.peer);
             OnlineManager.clientConns.push(conn);
+
+            conn.on('open', () => {
+                broadcastRoomRoster();
+            });
+
             conn.on('data', (data) => {
                 handleNetworkData(data, conn);
             });
@@ -1055,7 +1195,8 @@
             const p = GameState.player;
             return {
                 id: OnlineManager.myId || 'local',
-                nick: OnlineManager.myNick || (document.getElementById('playerNickInput').value || 'TRIONIC').toUpperCase(),
+                nick: getEffectivePlayerNick(),
+                isReady: !!OnlineManager.isReady,
                 mode: GameState.mode,
                 x: p ? Number(p.x.toFixed(2)) : 0,
                 y: p ? Number(p.y.toFixed(2)) : 0,
@@ -1101,16 +1242,18 @@
                     });
                     OnlineManager.remotePlayers = nextRemote;
                 }
-                if (data.tournament) {
+                if (data.tournament && !OnlineManager.isHost) {
                     const prevIdx = TournamentState.currentIndex;
+                    const wasActive = TournamentState.active;
                     const wasCompleted = TournamentState.completed;
                     Object.assign(TournamentState, data.tournament);
-                    const expectedMode = TournamentState.eventsQueue[TournamentState.currentIndex];
-                    if (TournamentState.active && expectedMode && GameState.mode !== expectedMode && GameState.phase === 'MENU') {
-                        selectEvent(expectedMode);
-                    }
-                    if (prevIdx !== TournamentState.currentIndex && expectedMode) {
-                        selectEvent(expectedMode);
+                    highlightTournamentButtonsUI(TournamentState.totalGames || 3);
+
+                    const expectedMode = TournamentState.eventsQueue?.[TournamentState.currentIndex];
+                    if (TournamentState.active && expectedMode) {
+                        if ((!wasActive || prevIdx !== TournamentState.currentIndex || GameState.mode !== expectedMode) && GameState.phase !== 'ACTIVE' && GameState.phase !== 'FLIGHT' && GameState.phase !== 'COUNTDOWN') {
+                            selectEvent(expectedMode, true);
+                        }
                     }
                     if (!wasCompleted && TournamentState.completed) {
                         openStandingsModal();
@@ -1122,18 +1265,30 @@
             } else if (data.type === 'TOURNAMENT_SYNC') {
                 if (data.tournament) {
                     Object.assign(TournamentState, data.tournament);
+                    highlightTournamentButtonsUI(TournamentState.totalGames || 3);
                     updateTournamentTopBar();
                     savePersistentSession();
                 }
-                if (data.forceMode && EVENT_CONFIGS[data.forceMode] && GameState.mode !== data.forceMode) {
-                    selectEvent(data.forceMode);
+                if (data.forceSwitchEvent) {
+                    OnlineManager.isReady = false;
+                }
+                const targetMode = data.forceMode || TournamentState.eventsQueue?.[TournamentState.currentIndex];
+                if (targetMode && EVENT_CONFIGS[targetMode] && (data.forceSwitchEvent || GameState.mode !== targetMode)) {
+                    selectEvent(targetMode, true);
                 }
                 if (data.TournamentCompleted || TournamentState.completed) {
                     openStandingsModal();
                 }
+                refreshOnlineUI();
             } else if (data.type === 'START_EVENT') {
+                closeOnlineModal();
+                closeStandingsModal();
+                if (data.tournament) {
+                    Object.assign(TournamentState, data.tournament);
+                    updateTournamentTopBar();
+                }
                 if (data.mode && EVENT_CONFIGS[data.mode] && GameState.mode !== data.mode) {
-                    selectEvent(data.mode);
+                    selectEvent(data.mode, true);
                 }
                 if (data.targetBarHeight) {
                     GameState.targetBarHeight = data.targetBarHeight;
@@ -1171,25 +1326,40 @@
                         player: getLocalPlayerSnapshot()
                     });
                 }
-            }, 55);
+            }, 65);
         }
 
-        function hostTriggerOnlineStart() {
+        function hostTriggerOnlineStart(bypassReadyCheck = false) {
             if (!OnlineManager.connected) {
-                startEventAction();
+                startEventAction(false);
                 return;
             }
+            if (!OnlineManager.isHost) {
+                toggleMyReadyState();
+                return;
+            }
+
+            const stats = getRoomReadyStats();
+            if (!bypassReadyCheck && !stats.allReady) {
+                SoundFX.foul();
+                return;
+            }
+
+            if (TournamentState.active && TournamentState.eventsQueue[TournamentState.currentIndex]) {
+                const expectedMode = TournamentState.eventsQueue[TournamentState.currentIndex];
+                if (GameState.mode !== expectedMode) {
+                    selectEvent(expectedMode, true);
+                }
+            }
+
             const packet = {
                 type: 'START_EVENT',
                 mode: GameState.mode,
-                targetBarHeight: GameState.targetBarHeight
+                targetBarHeight: GameState.targetBarHeight,
+                tournament: TournamentState
             };
-            if (OnlineManager.isHost) {
-                OnlineManager.clientConns.forEach(c => { if (c.open) c.send(packet); });
-                startEventAction(true);
-            } else if (OnlineManager.hostConn && OnlineManager.hostConn.open) {
-                startEventAction(true);
-            }
+            OnlineManager.clientConns.forEach(c => { if (c.open) c.send(packet); });
+            startEventAction(true);
         }
 
         function disconnectOnlineRoom(silent = false) {
@@ -1203,6 +1373,7 @@
             }
             OnlineManager.connected = false;
             OnlineManager.isHost = false;
+            OnlineManager.isReady = false;
             OnlineManager.hostConn = null;
             OnlineManager.clientConns = [];
             OnlineManager.remotePlayers = {};
@@ -1224,46 +1395,151 @@
             const dot = document.getElementById('onlineStatusDot');
             const btnText = document.getElementById('onlineBtnText');
             const disBtn = document.getElementById('btnDisconnectOnline');
+            const connectBtn = document.getElementById('btnConnectOnline');
+            const startTourBtn = document.getElementById('btnStartTournamentNow');
+            const modalReadyBtn = document.getElementById('btnModalReadyToggle');
+            const modalReadyIcon = document.getElementById('btnModalReadyIcon');
+            const modalReadyText = document.getElementById('btnModalReadyText');
+            const modalReadyBadge = document.getElementById('modalReadyCounterBadge');
             const listEl = document.getElementById('onlinePlayersList');
             const syncStartBtn = document.getElementById('btnOnlineSyncStart');
+            const syncStartText = document.getElementById('btnOnlineSyncStartText');
+            const btnStartRace = document.getElementById('btnStartRace');
             const openMainBtnText = document.getElementById('btnOpenOnlineMainText');
             const banner = document.getElementById('challengeBanner');
+            const hostConfigBox = document.getElementById('hostTournamentConfigBox');
+            const nextTourBtn = document.getElementById('btnNextTournamentEvent');
 
-            const remoteList = Object.values(OnlineManager.remotePlayers);
-            const totalCount = OnlineManager.connected ? (1 + remoteList.length) : 0;
+            const overlayReadyBox = document.getElementById('onlineReadyOverlayBox');
+            const overlayReadyCounter = document.getElementById('overlayReadyCounter');
+            const overlayReadyRoster = document.getElementById('overlayReadyRoster');
+            const btnToggleReadyOverlay = document.getElementById('btnToggleReadyOverlay');
+            const btnToggleReadyOverlayIcon = document.getElementById('btnToggleReadyOverlayIcon');
+            const btnToggleReadyOverlayText = document.getElementById('btnToggleReadyOverlayText');
+
+            const stats = getRoomReadyStats();
+            const totalCount = OnlineManager.connected ? stats.totalCount : 0;
+
+            if (modalReadyBadge) {
+                modalReadyBadge.textContent = OnlineManager.connected ? `${stats.readyCount}/${stats.totalCount} LISTOS` : 'OFFLINE';
+                modalReadyBadge.className = `text-[11px] font-black ${stats.allReady ? 'text-emerald-400' : 'text-amber-400'}`;
+            }
 
             if (OnlineManager.connected) {
                 dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0';
-                btnText.textContent = `${OnlineManager.roomCode} (${totalCount})`;
+                btnText.textContent = `${OnlineManager.roomCode} (${stats.readyCount}/${totalCount} ✅)`;
                 disBtn.classList.remove('hidden');
-                if (syncStartBtn) syncStartBtn.classList.remove('hidden');
-                if (openMainBtnText) openMainBtnText.textContent = `SALA ${OnlineManager.roomCode} (${totalCount} CONECTADOS) • CONFIGURAR`;
-                banner.textContent = `SALA ${OnlineManager.roomCode} • ${totalCount} ATLETAS`;
+                if (connectBtn) connectBtn.textContent = '🔄 Actualizar Nick';
+
+                if (modalReadyBtn) {
+                    modalReadyBtn.classList.remove('hidden');
+                    if (OnlineManager.isReady) {
+                        modalReadyBtn.className = 'w-full py-2 px-3 rounded-xl bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow flex items-center justify-center gap-1.5';
+                        modalReadyIcon.textContent = '✅';
+                        modalReadyText.textContent = 'ESTÁS LISTO (PULSA PARA CANCELAR)';
+                    } else {
+                        modalReadyBtn.className = 'w-full py-2 px-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow animate-pulse flex items-center justify-center gap-1.5';
+                        modalReadyIcon.textContent = '✋';
+                        modalReadyText.textContent = 'PULSA AQUÍ CUANDO ESTÉS LISTO';
+                    }
+                }
+
+                if (hostConfigBox) {
+                    hostConfigBox.style.opacity = OnlineManager.isHost ? '1' : '0.6';
+                }
+
+                if (startTourBtn) {
+                    if (OnlineManager.isHost) {
+                        startTourBtn.disabled = !stats.allReady;
+                        startTourBtn.textContent = stats.allReady
+                            ? `🏆 Iniciar Torneo (${TournamentState.totalGames} Pruebas)`
+                            : `⏳ Esperando Listos (${stats.readyCount}/${stats.totalCount})`;
+                    } else {
+                        startTourBtn.disabled = false;
+                        startTourBtn.textContent = OnlineManager.isReady ? '✅ Listo (Esperando Anfitrión)' : '✋ Marcarme como Listo';
+                    }
+                }
+
+                if (overlayReadyBox) {
+                    overlayReadyBox.classList.remove('hidden');
+                    overlayReadyCounter.textContent = `${stats.readyCount}/${stats.totalCount} LISTOS`;
+                    overlayReadyCounter.className = `px-2 py-0.5 rounded-full bg-slate-900 font-extrabold text-[10px] border ${stats.allReady ? 'text-emerald-400 border-emerald-500/50' : 'text-amber-400 border-amber-500/40'}`;
+                    overlayReadyRoster.innerHTML = stats.players.map(pl => `
+                        <span class="px-2 py-0.5 rounded-md font-bold border ${pl.isReady ? 'bg-emerald-950/90 text-emerald-300 border-emerald-600/50' : 'bg-slate-900 text-slate-400 border-slate-700'}">
+                            ${pl.isReady ? '✅' : '⏳'} ${pl.nick}${pl.isLocal ? ' (Tú)' : ''}
+                        </span>
+                    `).join('');
+
+                    if (OnlineManager.isReady) {
+                        btnToggleReadyOverlay.className = 'w-full py-2 px-3 rounded-lg bg-emerald-500 text-slate-950 font-black text-xs uppercase tracking-wider shadow flex items-center justify-center gap-1.5';
+                        btnToggleReadyOverlayIcon.textContent = '✅';
+                        btnToggleReadyOverlayText.textContent = '¡ESTOY LISTO! (TOCA PARA CAMBIAR)';
+                    } else {
+                        btnToggleReadyOverlay.className = 'w-full py-2 px-3 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow animate-pulse flex items-center justify-center gap-1.5';
+                        btnToggleReadyOverlayIcon.textContent = '✋';
+                        btnToggleReadyOverlayText.textContent = 'CONFIRMAR QUE ESTOY LISTO';
+                    }
+                }
+
+                if (btnStartRace) btnStartRace.classList.add('hidden');
+
+                if (syncStartBtn) {
+                    syncStartBtn.classList.remove('hidden');
+                    if (OnlineManager.isHost) {
+                        syncStartBtn.disabled = !stats.allReady;
+                        if (syncStartText) {
+                            syncStartText.textContent = stats.allReady
+                                ? '🚀 ¡TODOS LISTOS! LANZAR (3, 2, 1...)'
+                                : `⏳ ESPERANDO JUGADORES (${stats.readyCount}/${stats.totalCount} LISTOS)`;
+                        }
+                    } else {
+                        syncStartBtn.disabled = true;
+                        if (syncStartText) {
+                            syncStartText.textContent = stats.allReady
+                                ? '🚀 ¡TODOS LISTOS! EL ANFITRIÓN INICIARÁ...'
+                                : `⏳ ESPERANDO QUE TODOS ESTÉN LISTOS (${stats.readyCount}/${stats.totalCount})`;
+                        }
+                    }
+                }
+
+                if (nextTourBtn && !OnlineManager.isHost && TournamentState.active && !TournamentState.completed) {
+                    const nextTxt = document.getElementById('btnNextTourText');
+                    if (nextTxt) nextTxt.textContent = '⏳ ESPERANDO QUE EL ANFITRIÓN PASE DE PRUEBA...';
+                }
+
+                if (openMainBtnText) openMainBtnText.textContent = `SALA ${OnlineManager.roomCode} (${stats.readyCount}/${totalCount} LISTOS) • VER SALA`;
+                banner.textContent = `SALA ${OnlineManager.roomCode} • ${stats.readyCount}/${totalCount} LISTOS`;
                 banner.className = 'text-[10px] text-indigo-400 font-extrabold uppercase truncate';
 
-                const rows = [];
-                const myPts = TournamentState.standings[OnlineManager.myNick]?.points || 0;
-                rows.push(`
-                    <div class="flex items-center justify-between px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-200 font-bold">
-                        <span class="truncate">👤 ${OnlineManager.myNick} (Tú ${OnlineManager.isHost ? '• Anfitrión' : ''})</span>
-                        <span class="retro-font text-[10px] text-amber-300 shrink-0">${myPts} PTS</span>
-                    </div>
-                `);
-                remoteList.forEach(r => {
-                    const rPts = TournamentState.standings[(r.nick || '').toUpperCase()]?.points || 0;
-                    rows.push(`
-                        <div class="flex items-center justify-between px-2.5 py-1 rounded-lg bg-indigo-500/20 border border-indigo-400/40 text-indigo-200 font-bold">
-                            <span class="truncate">⚡ ${r.nick}</span>
-                            <span class="retro-font text-[10px] text-indigo-300 shrink-0">${rPts} PTS</span>
+                const rows = stats.players.map(pl => {
+                    const pts = TournamentState.standings[(pl.nick || '').toUpperCase()]?.points || 0;
+                    const badgeReady = pl.isReady
+                        ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[9px] font-black">✅ LISTO</span>'
+                        : '<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[9px] font-black">⏳ ESPERANDO</span>';
+                    return `
+                        <div class="flex items-center justify-between gap-1 px-2.5 py-1.5 rounded-lg ${pl.isLocal ? 'bg-amber-500/20 border border-amber-400/40 text-amber-200' : 'bg-indigo-500/20 border border-indigo-400/40 text-indigo-200'} font-bold">
+                            <span class="truncate">${pl.isLocal ? '👤' : '⚡'} ${pl.nick} ${pl.isLocal && OnlineManager.isHost ? '(Host)' : ''}</span>
+                            <div class="flex items-center gap-1.5 shrink-0">
+                                ${badgeReady}
+                                <span class="retro-font text-[10px] text-amber-300">${pts} PTS</span>
+                            </div>
                         </div>
-                    `);
+                    `;
                 });
                 listEl.innerHTML = rows.join('');
             } else {
                 dot.className = 'w-2 h-2 rounded-full bg-slate-500 shrink-0';
                 btnText.textContent = 'Sala Online';
                 disBtn.classList.add('hidden');
+                if (connectBtn) connectBtn.textContent = '🔗 Conectar a Sala Online';
+                if (modalReadyBtn) modalReadyBtn.classList.add('hidden');
+                if (overlayReadyBox) overlayReadyBox.classList.add('hidden');
+                if (btnStartRace) btnStartRace.classList.remove('hidden');
                 if (syncStartBtn) syncStartBtn.classList.add('hidden');
+                if (startTourBtn) {
+                    startTourBtn.disabled = false;
+                    startTourBtn.textContent = '🏆 Iniciar Torneo Local';
+                }
                 if (openMainBtnText) openMainBtnText.textContent = 'CREAR / UNIRSE A SALA ONLINE';
                 if (TournamentState.active) {
                     const sorted = Object.values(TournamentState.standings).sort((a, b) => b.points - a.points);
@@ -1295,34 +1571,37 @@
             elapsedTime: 0,
             countdownText: '',
             cameraX: 0,
+            records: { ...DEFAULT_RECORDS },
+            player: null,
+            rivals: [],
+            hurdles: [[], [], []],
             particles: [],
-            clouds: [{ x: 70, y: 24, w: 65 }, { x: 260, y: 38, w: 85 }, { x: 490, y: 18, w: 70 }, { x: 720, y: 32, w: 90 }],
-            records: { '100m': 9.85, '110m': 13.10, 'longjump': 8.45, 'javelin': 86.50, 'highjump': 2.30 },
+            clouds: [
+                { x: 40, y: 18, w: 54 },
+                { x: 210, y: 28, w: 72 },
+                { x: 420, y: 14, w: 62 },
+                { x: 640, y: 24, w: 48 }
+            ],
             isChargingAngle: false,
-            chargeAngle: 10,
+            chargeAngle: 12,
             chargeDir: 1,
             lockedAngle: null,
             takeoffX: 0,
             fieldResult: 0,
             isFoul: false,
-            barCleared: true,
             targetBarHeight: 2.15,
+            barCleared: true,
             fieldTimeLeft: FIELD_SHOT_CLOCK_MAX,
-            javelin: { x: 0, y: 1.5, vx: 0, vy: 0, angle: 0, inAir: false, landed: false },
-            player: null,
-            rivals: [],
-            hurdles: []
+            javelin: { x: 0, y: 1.5, vx: 0, vy: 0, angle: 0, inAir: false, landed: false }
         };
-
         loadSavedRecords();
 
         function renderHighJumpButtons() {
             const container = document.getElementById('barHeightButtons');
-            container.innerHTML = HIGH_JUMP_HEIGHTS.map(h => `
-                <button onclick="setTargetBarHeight(${h})" class="px-2.5 py-1 rounded-lg font-bold text-xs border transition-all ${Math.abs(GameState.targetBarHeight - h) < 0.01 ? 'bg-amber-500 text-slate-950 border-amber-300 scale-105' : 'bg-slate-800 text-slate-300 border-slate-700'}">
-                    ${h.toFixed(2)}m
-                </button>
-            `).join('');
+            container.innerHTML = HIGH_JUMP_HEIGHTS.map(h => {
+                const active = Math.abs(GameState.targetBarHeight - h) < 0.01;
+                return `<button onclick="setTargetBarHeight(${h})" class="px-2.5 py-1 rounded-lg font-extrabold text-xs transition-all ${active ? 'bg-amber-400 text-slate-950 shadow' : 'bg-slate-800 text-slate-300'}">${h.toFixed(2)}m</button>`;
+            }).join('');
         }
 
         function setTargetBarHeight(h) {
@@ -1580,7 +1859,7 @@
                 new Athlete({ name: 'ATLETA 2', isPlayer: false, lane: 2, shirtColor: '#22c55e', shortsColor: '#0f172a', skinColor: '#f1c27d', headbandColor: '#ffffff', aiBaseSpeed: isHurdles ? 8.0 : 9.05, aiJumpAccuracy: 0.86 })
             ] : [];
 
-            GameState.player = new Athlete({ name: OnlineManager.myNick || 'TRIONIC', isPlayer: true, lane: 1, shirtColor: '#ef4444', shortsColor: '#ffffff', skinColor: '#e0ac69', headbandColor: '#fbbf24' });
+            GameState.player = new Athlete({ name: getEffectivePlayerNick(), isPlayer: true, lane: 1, shirtColor: '#ef4444', shortsColor: '#ffffff', skinColor: '#e0ac69', headbandColor: '#fbbf24' });
 
             GameState.hurdles = [[], [], []];
             if (isHurdles) {
@@ -1593,7 +1872,14 @@
             GameState.javelin = { x: 0, y: 1.5, vx: 0, vy: 0, angle: 0, inAir: false, landed: false };
         }
 
-        function selectEvent(mode) {
+        function selectEvent(mode, fromTournamentOrNetwork = false) {
+            if (TournamentState.active && !TournamentState.completed && OnlineManager.connected && !fromTournamentOrNetwork) {
+                const lockedMode = TournamentState.eventsQueue[TournamentState.currentIndex];
+                if (lockedMode && mode !== lockedMode && !OnlineManager.isHost) {
+                    mode = lockedMode;
+                }
+            }
+
             GameState.mode = mode;
             GameState.raceDistance = mode === '100m' ? 100 : (mode === '110m' ? 110 : FOUL_LINE_X);
             GameState.phase = 'MENU'; GameState.elapsedTime = 0; GameState.cameraX = 0;
@@ -1615,6 +1901,7 @@
             initCompetitors();
             updateHUD();
             showStartModal();
+            refreshOnlineUI();
         }
 
         function showStartModal() {
@@ -1645,31 +1932,53 @@
         }
 
         function startEventAction(fromNetwork = false) {
+            if (OnlineManager.connected && !fromNetwork) {
+                hostTriggerOnlineStart();
+                return;
+            }
+
             SoundFX.init();
-            const nickVal = (document.getElementById('playerNickInput').value || 'TRIONIC').trim().toUpperCase();
-            syncNickInputs(nickVal);
+            const rawInput = (document.getElementById('playerNickInput').value || '').trim().toUpperCase();
+            syncNickInputs(rawInput);
+
+            OnlineManager.isReady = false;
+            Object.values(OnlineManager.remotePlayers).forEach(r => { r.isReady = false; });
 
             document.getElementById('overlayModal').classList.add('hidden');
+            closeOnlineModal();
             initCompetitors();
-            GameState.player.name = nickVal;
+            GameState.player.name = getEffectivePlayerNick();
             GameState.elapsedTime = 0; GameState.cameraX = 0;
             GameState.fieldTimeLeft = FIELD_SHOT_CLOCK_MAX;
 
-            const isRace = GameState.mode === '100m' || GameState.mode === '110m';
-            if (isRace) {
-                GameState.phase = 'COUNTDOWN'; GameState.countdownText = '¡A SUS PUESTOS!';
-                SoundFX.beep(440, 0.16, 'square', 0.12);
-                setTimeout(() => { if (GameState.phase === 'COUNTDOWN') { GameState.countdownText = '¡LISTOS!'; SoundFX.beep(587.33, 0.2, 'square', 0.12); } }, 850);
-                setTimeout(() => {
-                    if (GameState.phase === 'COUNTDOWN') {
-                        GameState.phase = 'ACTIVE'; GameState.countdownText = '¡YA!'; SoundFX.pistolShot();
-                        setTimeout(() => { if (GameState.countdownText === '¡YA!') GameState.countdownText = ''; }, 650);
-                    }
-                }, 1700);
-            } else {
-                GameState.phase = 'ACTIVE'; GameState.countdownText = '¡15s PARA SALTAR/LANZAR!'; SoundFX.beep(660, 0.18, 'square', 0.12);
-                setTimeout(() => { if (GameState.countdownText === '¡15s PARA SALTAR/LANZAR!') GameState.countdownText = ''; }, 900);
-            }
+            GameState.phase = 'COUNTDOWN';
+            GameState.countdownText = '3';
+            SoundFX.beep(440, 0.16, 'square', 0.12);
+
+            setTimeout(() => {
+                if (GameState.phase === 'COUNTDOWN') {
+                    GameState.countdownText = '2';
+                    SoundFX.beep(523.25, 0.16, 'square', 0.12);
+                }
+            }, 800);
+
+            setTimeout(() => {
+                if (GameState.phase === 'COUNTDOWN') {
+                    GameState.countdownText = '1';
+                    SoundFX.beep(659.25, 0.18, 'square', 0.13);
+                }
+            }, 1600);
+
+            setTimeout(() => {
+                if (GameState.phase === 'COUNTDOWN') {
+                    GameState.phase = 'ACTIVE';
+                    GameState.countdownText = '¡YA!';
+                    SoundFX.pistolShot();
+                    setTimeout(() => {
+                        if (GameState.countdownText === '¡YA!') GameState.countdownText = '';
+                    }, 650);
+                }
+            }, 2400);
         }
 
         function finishRaceEvent() {
@@ -1719,9 +2028,10 @@
                     finishTime: typeof r.finishTime === 'number' ? r.finishTime : (GameState.elapsedTime + Math.max(0.2, (GameState.raceDistance - (r.x || 0)) / 8.5))
                 }));
 
+            const myName = getEffectivePlayerNick();
             const localEntry = {
-                name: GameState.player.name || OnlineManager.myNick,
-                rawNick: OnlineManager.myNick,
+                name: myName,
+                rawNick: myName,
                 isPlayer: true,
                 finishTime: GameState.player.finishTime
             };
@@ -1772,6 +2082,7 @@
             document.getElementById('btnWhatsAppShare').classList.remove('hidden');
             document.getElementById('btnStartText').textContent = 'REPETIR PRUEBA';
             updateNextTournamentButtonUI();
+            refreshOnlineUI();
             modal.classList.remove('hidden');
             updateHUD();
         }
@@ -1813,9 +2124,10 @@
                 aiFieldPool.push({ name: 'ATLETA 2', rawNick: 'ATLETA 2', isPlayer: false, scoreVal: m2, isFoul: false, displayMark: m2.toFixed(2) + 'm' });
             }
 
+            const myName = getEffectivePlayerNick();
             const localFieldEntry = {
-                name: OnlineManager.myNick,
-                rawNick: OnlineManager.myNick,
+                name: myName,
+                rawNick: myName,
                 isPlayer: true,
                 scoreVal: GameState.isFoul ? -1 : mark,
                 isFoul: GameState.isFoul,
@@ -1862,6 +2174,7 @@
             document.getElementById('btnWhatsAppShare').classList.remove('hidden');
             document.getElementById('btnStartText').textContent = 'NUEVO INTENTO';
             updateNextTournamentButtonUI();
+            refreshOnlineUI();
             modal.classList.remove('hidden');
             updateHUD();
         }
@@ -1899,6 +2212,7 @@
         window.addEventListener('pointerup', () => { btnAction.classList.remove('pressed'); if (GameState.isChargingAngle) releaseFieldAction(); });
 
         window.addEventListener('keydown', (e) => {
+            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
             if (e.repeat) return;
             const c = e.code;
             if (c === 'Space' || c === 'KeyZ' || c === 'KeyX' || c === 'ArrowRight' || c === 'KeyD') { e.preventDefault(); handleRunTap(); }
@@ -1906,6 +2220,7 @@
             else if (c === 'Enter' && (GameState.phase === 'MENU' || GameState.phase === 'FINISHED')) startEventAction();
         });
         window.addEventListener('keyup', (e) => {
+            if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
             if (['ArrowUp', 'KeyW', 'ShiftLeft'].includes(e.code)) { e.preventDefault(); handleActionRelease(); }
         });
 
@@ -2037,7 +2352,7 @@
             ctx.fillStyle = athlete.skinColor; ctx.beginPath(); ctx.arc(headX, headY, 6, 0, Math.PI * 2); ctx.fill();
             ctx.fillStyle = athlete.headbandColor; ctx.fillRect(headX - 6, headY - 3.8, 12, 2.8);
 
-            drawLeg(leg1Angle, knee1Bend, false); drawArm(arm1Angle, false);
+            drawLeg(leg1Angle, false); drawArm(arm1Angle, false);
 
             if (athlete.isPlayer) {
                 ctx.fillStyle = '#fbbf24'; ctx.beginPath(); ctx.moveTo(headX, headY - 10); ctx.lineTo(headX - 4.5, headY - 16); ctx.lineTo(headX + 4.5, headY - 16); ctx.closePath(); ctx.fill();
